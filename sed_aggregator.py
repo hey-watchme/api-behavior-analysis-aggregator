@@ -2,7 +2,7 @@
 """
 SED（Sound Event Detection）データ集計ツール
 
-EC2上の音響イベント検出データを収集し、日次集計結果をローカルに保存する。
+Vault API上の音響イベント検出データを収集し、日次集計結果をローカルに保存する。
 30分スロット単位で最大48個のファイルを非同期処理で取得・解析する。
 """
 
@@ -21,7 +21,7 @@ import argparse
 class SEDAggregator:
     """SED データ集計クラス"""
     
-    def __init__(self, base_url: str = "https://api.hey-watch.me/status", verify_ssl: bool = True):
+    def __init__(self, base_url: str = "https://api.hey-watch.me/download", verify_ssl: bool = True):
         self.base_url = base_url
         self.verify_ssl = verify_ssl
         self.time_slots = self._generate_time_slots()
@@ -43,8 +43,8 @@ class SEDAggregator:
         return slots
     
     def _build_url(self, user_id: str, date: str, time_slot: str) -> str:
-        """指定されたパラメータからURLを構築"""
-        return f"{self.base_url}/{user_id}/{date}/sed/{time_slot}.json"
+        """指定されたパラメータからVault API URLを構築"""
+        return f"{self.base_url}?user_id={user_id}&date={date}&slot={time_slot}&type=json"
     
     async def _fetch_json(self, session: aiohttp.ClientSession, url: str) -> Optional[Dict]:
         """単一のJSONファイルを非同期で取得"""
@@ -237,7 +237,7 @@ async def main():
     parser = argparse.ArgumentParser(description="SED データ集計ツール")
     parser.add_argument("user_id", help="ユーザーID（例: user123）")
     parser.add_argument("date", help="対象日付（YYYY-MM-DD形式）")
-    parser.add_argument("--base-url", default="https://api.hey-watch.me/status", help="ベースURL")
+    parser.add_argument("--base-url", default="https://api.hey-watch.me/download", help="Vault API ベースURL")
     
     args = parser.parse_args()
     
