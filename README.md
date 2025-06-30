@@ -25,7 +25,7 @@
    - タスク状況管理（started/running/completed/failed）
 
 3. **Vault API統合**
-   - Vault APIからのデータ取得: `https://api.hey-watch.me/download`
+   - SED専用データ取得: `https://api.hey-watch.me/download-sed`
    - Vault APIへのアップロード: `https://api.hey-watch.me/upload/analysis/sed-summary`
    - SSL証明書検証無効化対応
 
@@ -97,7 +97,7 @@ aiohttp>=3.8.0,<4.0.0 # 非同期HTTPクライアント
 - asyncio（非同期処理）
 
 **🌐 ネットワーク:**
-- Vault API `https://api.hey-watch.me/download` へのHTTPS接続
+- SED専用Vault API `https://api.hey-watch.me/download-sed` へのHTTPS接続
 - 30分スロット×48個の並列リクエスト対応
 
 **💾 ストレージ:**
