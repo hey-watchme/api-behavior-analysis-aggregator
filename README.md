@@ -165,7 +165,7 @@ POST /analysis/sed
 Content-Type: application/json
 
 {
-  "user_id": "user123",    # 必須: ユーザー識別子
+  "device_id": "device123",    # 必須: デバイス識別子
   "date": "2025-06-21"     # 必須: 分析対象日（YYYY-MM-DD形式）
 }
 ```
@@ -175,7 +175,7 @@ Content-Type: application/json
 {
   "task_id": "550e8400-e29b-41d4-a716-446655440000",
   "status": "started",
-  "message": "user123/2025-06-21 の分析を開始しました"
+  "message": "device123/2025-06-21 の分析を開始しました"
 }
 ```
 
@@ -201,7 +201,7 @@ GET /analysis/sed/550e8400-e29b-41d4-a716-446655440000
   "status": "running",
   "message": "データ収集・集計中...",
   "progress": 25,
-  "user_id": "user123",
+  "device_id": "device123",
   "date": "2025-06-21",
   "created_at": "2025-06-29T10:30:00.000000"
 }
@@ -224,7 +224,7 @@ GET /analysis/sed/550e8400-e29b-41d4-a716-446655440000
     },
     "upload": {"success": 1, "failed": 0, "total": 1},
     "total_events": 300,
-    "output_path": "/Users/kaya.matsumoto/data/data_accounts/user123/2025-06-21/sed-summary/result.json"
+    "output_path": "/Users/kaya.matsumoto/data/data_accounts/device123/2025-06-21/sed-summary/result.json"
   }
 }
 ```
@@ -255,14 +255,14 @@ GET /analysis/sed
     {
       "task_id": "550e8400-e29b-41d4-a716-446655440000",
       "status": "completed",
-      "user_id": "user123",
+      "device_id": "device123",
       "date": "2025-06-21",
       "progress": 100
     },
     {
       "task_id": "660e8400-e29b-41d4-a716-446655440001",
       "status": "running",
-      "user_id": "user456",
+      "device_id": "device456",
       "date": "2025-06-22",
       "progress": 50
     }
@@ -350,10 +350,10 @@ class SEDAnalysisClient:
             print(f"❌ API接続エラー: {e}")
             return False
     
-    async def start_analysis(self, user_id, date):
+    async def start_analysis(self, device_id, date):
         """分析を開始してタスクIDを取得"""
         try:
-            data = {"user_id": user_id, "date": date}
+            data = {"device_id": device_id, "date": date}
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     f"{self.base_url}/analysis/sed",
@@ -418,9 +418,9 @@ class SEDAnalysisClient:
             
             await asyncio.sleep(2)  # 2秒間隔でチェック
     
-    async def run_full_analysis(self, user_id, date):
+    async def run_full_analysis(self, device_id, date):
         """完全な分析フローを実行"""
-        print(f"🚀 SED分析開始: {user_id} / {date}")
+        print(f"🚀 SED分析開始: {device_id} / {date}")
         
         # 1. ヘルスチェック
         if not await self.health_check():
@@ -428,7 +428,7 @@ class SEDAnalysisClient:
             return None
         
         # 2. 分析開始
-        task_id = await self.start_analysis(user_id, date)
+        task_id = await self.start_analysis(device_id, date)
         if not task_id:
             return None
         
@@ -462,13 +462,13 @@ async def main():
     client = SEDAnalysisClient()
     
     # 単体分析実行
-    result = await client.run_full_analysis("user123", "2025-06-21")
+    result = await client.run_full_analysis("device123", "2025-06-21")
     
     # 複数日分析実行
     dates = ["2025-06-20", "2025-06-21", "2025-06-22"]
     for date in dates:
         print(f"\n{'='*50}")
-        await client.run_full_analysis("user123", date)
+        await client.run_full_analysis("device123", date)
         await asyncio.sleep(1)  # 1秒間隔
 
 # 実行
@@ -482,7 +482,7 @@ if __name__ == "__main__":
 # SED分析 実行スクリプト
 
 API_BASE="http://localhost:8010"
-USER_ID="user123"
+USER_ID="device123"
 DATE="2025-06-21"
 
 echo "🚀 SED分析開始: $USER_ID / $DATE"
@@ -499,7 +499,7 @@ echo "✅ API稼働中"
 echo "📊 分析開始..."
 RESPONSE=$(curl -s -X POST "$API_BASE/analysis/sed" \
   -H "Content-Type: application/json" \
-  -d "{\"user_id\": \"$USER_ID\", \"date\": \"$DATE\"}")
+  -d "{\"device_id\": \"$USER_ID\", \"date\": \"$DATE\"}")
 
 TASK_ID=$(echo "$RESPONSE" | jq -r '.task_id')
 if [ "$TASK_ID" = "null" ]; then
@@ -558,7 +558,7 @@ class SEDAnalysisClient {
     async startAnalysis(userId, date) {
         try {
             const response = await axios.post(`${this.baseUrl}/analysis/sed`, {
-                user_id: userId,
+                device_id: userId,
                 date: date
             });
             console.log(`✅ 分析開始: ${response.data.message}`);
@@ -654,13 +654,13 @@ async function main() {
     const client = new SEDAnalysisClient();
     
     // 単体分析実行
-    await client.runFullAnalysis('user123', '2025-06-21');
+    await client.runFullAnalysis('device123', '2025-06-21');
     
     // 複数日分析実行
     const dates = ['2025-06-20', '2025-06-21', '2025-06-22'];
     for (const date of dates) {
         console.log('\n' + '='.repeat(50));
-        await client.runFullAnalysis('user123', date);
+        await client.runFullAnalysis('device123', date);
         await new Promise(resolve => setTimeout(resolve, 1000));
     }
 }
@@ -674,7 +674,7 @@ main().catch(console.error);
 
 **出力ファイルパス:**
 ```
-/Users/kaya.matsumoto/data/data_accounts/{user_id}/{YYYY-MM-DD}/sed-summary/result.json
+/Users/kaya.matsumoto/data/data_accounts/{device_id}/{YYYY-MM-DD}/sed-summary/result.json
 ```
 
 **JSON構造:**
@@ -774,7 +774,7 @@ from upload_sed_summary import SEDSummaryUploader
 - **依存関係**: 独立（外部ライブラリのみ）
 - **実行**: 
   - API経由: `api_server.py`から自動実行
-  - 単体実行: `python sed_aggregator.py user123 2025-06-21`
+  - 単体実行: `python sed_aggregator.py device123 2025-06-21`
 
 #### ☁️ **upload_sed_summary.py** (アップロードモジュール)
 - **役割**: 分析結果のクラウドストレージアップロード
@@ -784,7 +784,7 @@ from upload_sed_summary import SEDSummaryUploader
 - **依存関係**: 独立（外部ライブラリのみ）
 - **実行**:
   - API経由: `api_server.py`から自動実行
-  - 単体実行: `python upload_sed_summary.py --user-id user123 --date 2025-06-21`
+  - 単体実行: `python upload_sed_summary.py --user-id device123 --date 2025-06-21`
 
 #### 💡 **example_usage.py** (クライアント使用例)
 - **役割**: APIクライアントの実装例
@@ -802,16 +802,16 @@ python api_server.py
 # 2. REST API経由で実行
 curl -X POST "http://localhost:8010/analysis/sed" \
   -H "Content-Type: application/json" \
-  -d '{"user_id": "user123", "date": "2025-06-21"}'
+  -d '{"device_id": "device123", "date": "2025-06-21"}'
 ```
 
 #### パターン2: 個別モジュールの直接実行
 ```bash
 # データ収集・集計のみ
-python sed_aggregator.py user123 2025-06-21
+python sed_aggregator.py device123 2025-06-21
 
 # アップロードのみ
-python upload_sed_summary.py --user-id user123 --date 2025-06-21
+python upload_sed_summary.py --user-id device123 --date 2025-06-21
 
 # 全ファイルのアップロード
 python upload_sed_summary.py
@@ -840,15 +840,15 @@ logging.basicConfig(level=logging.INFO)
 
 ### 詳細ログ例
 ```
-INFO:__main__:SED分析開始: task_id=abe82747-bbca-4feb-9f5b-8103128c7580, user_id=user123, date=2025-06-21
-データ取得開始: user_id=user123, date=2025-06-21
+INFO:__main__:SED分析開始: task_id=abe82747-bbca-4feb-9f5b-8103128c7580, device_id=device123, date=2025-06-21
+データ取得開始: device_id=device123, date=2025-06-21
 取得完了: 00-00
-ファイルが存在しません: https://api.hey-watch.me/status/user123/2025-06-21/sed/01-00.json
-ファイルが存在しません: https://api.hey-watch.me/status/user123/2025-06-21/sed/02-00.json
+ファイルが存在しません: https://api.hey-watch.me/status/device123/2025-06-21/sed/01-00.json
+ファイルが存在しません: https://api.hey-watch.me/status/device123/2025-06-21/sed/02-00.json
 データ取得完了: 1/48 ファイル
 データ集計開始...
 集計完了: 総イベント数 300
-結果保存完了: /Users/kaya.matsumoto/data/data_accounts/user123/2025-06-21/sed-summary/result.json
+結果保存完了: /Users/kaya.matsumoto/data/data_accounts/device123/2025-06-21/sed-summary/result.json
 INFO:__main__:SED分析完了: task_id=abe82747-bbca-4feb-9f5b-8103128c7580
 ```
 
