@@ -7,6 +7,7 @@ FastAPIを使用してSED分析機能をREST APIとして提供する。
 """
 
 from fastapi import FastAPI, BackgroundTasks, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import uuid
@@ -23,6 +24,15 @@ app = FastAPI(
     title="SED分析API",
     description="音響イベント検出データの収集・集計・アップロードAPI",
     version="1.0.0"
+)
+
+# CORS設定を追加
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 本番環境では適切に制限してください
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # ログ設定
