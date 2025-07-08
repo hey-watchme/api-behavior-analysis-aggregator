@@ -155,24 +155,22 @@ async def execute_sed_analysis(task_id: str, device_id: str, date: str):
         })
         
         logger.info(f"📊 SEDAggregator インスタンス作成中...")
-        # 環境変数でSSL検証を制御（デフォルトは無効化）
-        verify_ssl = os.getenv('VERIFY_SSL', 'false').lower() == 'true'
-        aggregator = SEDAggregator(verify_ssl=verify_ssl)
-        logger.info(f"📡 データ取得開始（SSL検証: {'有効' if verify_ssl else '無効'}）...")
-        output_path = await aggregator.run(device_id, date)
-        logger.info(f"📄 データ取得結果: output_path={output_path}")
+        aggregator = SEDAggregator()
+        logger.info(f"📡 Supabaseからデータ取得開始...")
+        success = await aggregator.run(device_id, date)
+        logger.info(f"📄 データ取得結果: success={success}")
         
-        if not output_path:
-            logger.error(f"❌ データ収集失敗: output_pathが空")
+        if not success:
+            logger.error(f"❌ データ収集・保存失敗")
             task_status[task_id].update({
                 "status": "failed",
                 "message": "データ収集に失敗しました",
-                "error": "取得できたデータがありません",
+                "error": "取得できたデータがありません、またはSupabase保存エラー",
                 "progress": 100
             })
             return
         
-        logger.info(f"✅ データ収集成功: {output_path}")
+        logger.info(f"✅ データ収集・Supabase保存成功")
         
         # ステップ2: アップロード
         task_status[task_id].update({
@@ -188,12 +186,7 @@ async def execute_sed_analysis(task_id: str, device_id: str, date: str):
         upload_result = await uploader.run(device_id, date)
         logger.info(f"📤 アップロード結果: {upload_result}")
         
-        # 結果ファイル読み込み
-        logger.info(f"📖 結果ファイル読み込み中: {output_path}")
-        with open(output_path, 'r', encoding='utf-8') as f:
-            analysis_result = json.load(f)
-        
-        logger.info(f"🎉 分析完了: 総イベント数={sum(item['count'] for item in analysis_result['summary_ranking'])}")
+        logger.info(f"🎉 分析完了")
         
         # 成功
         task_status[task_id].update({
@@ -201,10 +194,10 @@ async def execute_sed_analysis(task_id: str, device_id: str, date: str):
             "message": "分析完了",
             "progress": 100,
             "result": {
-                "analysis": analysis_result,
+                "message": "データはSupabaseのbehavior_summaryテーブルに保存されました",
                 "upload": upload_result,
-                "total_events": sum(item["count"] for item in analysis_result["summary_ranking"]),
-                "output_path": output_path
+                "device_id": device_id,
+                "date": date
             }
         })
         

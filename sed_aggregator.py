@@ -2,37 +2,39 @@
 """
 SED（Sound Event Detection）データ集計ツール
 
-Vault API上の音響イベント検出データを収集し、日次集計結果をローカルに保存する。
-30分スロット単位で最大48個のファイルを非同期処理で取得・解析する。
+Supabaseのbehavior_yamnetテーブルから音響イベント検出データを収集し、
+日次集計結果をローカルに保存する。
 """
 
 import asyncio
-import aiohttp
 import json
 import os
-import ssl
 from pathlib import Path
-from collections import Counter, defaultdict
-from typing import Dict, List, Optional, Tuple
+from collections import Counter
+from typing import Dict, List, Optional, Any
 from datetime import datetime
 import argparse
+from supabase import create_client, Client
+from dotenv import load_dotenv
+
+# 環境変数を読み込み
+load_dotenv()
 
 
 class SEDAggregator:
     """SED データ集計クラス"""
     
-    def __init__(self, base_url: str = "https://api.hey-watch.me/download-sed", verify_ssl: bool = True):
-        self.base_url = base_url
-        self.verify_ssl = verify_ssl
-        self.time_slots = self._generate_time_slots()
+    def __init__(self):
+        # Supabaseクライアントの初期化
+        supabase_url = os.getenv('SUPABASE_URL')
+        supabase_key = os.getenv('SUPABASE_KEY')
         
-        # SSL設定を準備
-        if not self.verify_ssl:
-            self.ssl_context = ssl.create_default_context()
-            self.ssl_context.check_hostname = False
-            self.ssl_context.verify_mode = ssl.CERT_NONE
-        else:
-            self.ssl_context = None
+        if not supabase_url or not supabase_key:
+            raise ValueError("SUPABASE_URLおよびSUPABASE_KEYが設定されていません")
+        
+        self.supabase: Client = create_client(supabase_url, supabase_key)
+        self.time_slots = self._generate_time_slots()
+        print(f"✅ Supabase接続設定完了")
     
     def _generate_time_slots(self) -> List[str]:
         """30分スロットのリストを生成（00-00 から 23-30 まで）"""
@@ -42,94 +44,41 @@ class SEDAggregator:
                 slots.append(f"{hour:02d}-{minute:02d}")
         return slots
     
-    def _build_url(self, device_id: str, date: str, time_slot: str) -> str:
-        """指定されたパラメータからSED専用Vault API URLを構築"""
-        return f"{self.base_url}?device_id={device_id}&date={date}&slot={time_slot}"
-    
-    async def _fetch_json(self, session: aiohttp.ClientSession, url: str) -> Optional[Dict]:
-        """単一のJSONファイルを非同期で取得"""
+    async def fetch_all_data(self, device_id: str, date: str) -> Dict[str, List[Dict]]:
+        """指定日の全SEDデータをSupabaseから取得"""
+        print(f"📊 Supabaseからデータ取得開始: device_id={device_id}, date={date}")
+        
         try:
-            print(f"🔍 取得開始: {url}")
-            async with session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as response:
-                print(f"📊 レスポンス状態: {response.status} - {url}")
-                if response.status == 404:
-                    print(f"ファイルが存在しません: {url}")
-                    return None
-                if response.status != 200:
-                    print(f"HTTPエラー {response.status}: {url}")
-                    return None
-                
-                content = await response.text()
-                if not content.strip():
-                    print(f"空のファイル: {url}")
-                    return None
-                
-                print(f"✅ JSON解析開始: {url} (content length: {len(content)})")
-                json_data = await response.json()
-                print(f"🎉 JSON解析成功: {url}")
-                return json_data
-                
-        except asyncio.TimeoutError:
-            print(f"⏰ タイムアウト: {url}")
-            return None
-        except aiohttp.ClientError as e:
-            print(f"🔌 接続エラー: {url}, {e}")
-            return None
-        except json.JSONDecodeError as e:
-            print(f"❌ JSON解析エラー: {url}, {e}")
-            return None
-        except Exception as e:
-            print(f"💥 予期しないエラー: {url}, {e}")
-            return None
-    
-    async def fetch_all_data(self, device_id: str, date: str) -> Dict[str, Dict]:
-        """指定日の全SEDデータを並列取得"""
-        print(f"データ取得開始: device_id={device_id}, date={date}")
-        
-        results = {}
-        
-        # SSL設定を含むConnectorを作成
-        connector = aiohttp.TCPConnector(
-            ssl=self.ssl_context if not self.verify_ssl else True,
-            limit=100,
-            limit_per_host=30
-        )
-        
-        async with aiohttp.ClientSession(connector=connector) as session:
-            # 全スロットのタスクを並列実行
-            tasks = []
-            for slot in self.time_slots:
-                url = self._build_url(device_id, date, slot)
-                task = self._fetch_json(session, url)
-                tasks.append((slot, task))
+            # Supabaseからデータを取得
+            response = self.supabase.table('behavior_yamnet').select('*').eq(
+                'device_id', device_id
+            ).eq(
+                'date', date
+            ).execute()
             
-            # 結果を収集
-            for slot, task in tasks:
-                data = await task
-                if data is not None:
-                    results[slot] = data
-                    print(f"取得完了: {slot}")
-        
-        print(f"データ取得完了: {len(results)}/{len(self.time_slots)} ファイル")
-        return results
+            # 結果をtime_blockごとに整理
+            results = {}
+            for row in response.data:
+                time_block = row['time_block']
+                events = row['events']  # jsonb型なのでそのまま辞書として扱える
+                results[time_block] = events
+            
+            print(f"✅ データ取得完了: {len(results)}/{len(self.time_slots)} スロット")
+            return results
+            
+        except Exception as e:
+            print(f"❌ Supabaseからのデータ取得エラー: {e}")
+            return {}
     
-    def _extract_events(self, data: Dict) -> List[str]:
-        """JSONデータから音響イベントラベルを抽出"""
+    def _extract_events_from_supabase(self, events_data: List[Dict]) -> List[str]:
+        """Supabaseのeventsカラムから音響イベントラベルを抽出"""
         events = []
         
-        # データ構造を探索してlabelを抽出（Silenceも含む）
-        def extract_recursive(obj):
-            if isinstance(obj, dict):
-                for key, value in obj.items():
-                    if key == "label" and isinstance(value, str):
-                        events.append(value)
-                    elif isinstance(value, (dict, list)):
-                        extract_recursive(value)
-            elif isinstance(obj, list):
-                for item in obj:
-                    extract_recursive(item)
+        # events_dataは[{"label": "Speech", "prob": 0.98}, ...]の形式
+        for event in events_data:
+            if isinstance(event, dict) and 'label' in event:
+                events.append(event['label'])
         
-        extract_recursive(data)
         return events
     
     def _create_summary_ranking(self, all_events: List[str]) -> List[Dict[str, int]]:
@@ -149,37 +98,42 @@ class SEDAggregator:
         if other_count > 0:
             ranking.append({"event": "other", "count": other_count})
         
+        # ランキングを出現回数でソート
+        ranking.sort(key=lambda x: x['count'], reverse=True)
+        
         return ranking
     
-    def _create_time_blocks(self, slot_data: Dict[str, Dict]) -> Dict[str, List[str]]:
-        """スロット別の自然言語形式イベント集計を作成"""
+    def _create_time_blocks(self, slot_data: Dict[str, List[Dict]]) -> Dict[str, Optional[List[Dict[str, Any]]]]:
+        """スロット別のイベント集計を構造化形式で作成"""
         time_blocks = {}
         
         for slot in self.time_slots:
             if slot in slot_data:
-                events = self._extract_events(slot_data[slot])
+                events = self._extract_events_from_supabase(slot_data[slot])
                 if events:
                     counter = Counter(events)
-                    # イベントを自然言語形式で表現
-                    descriptions = []
+                    # イベントを構造化形式で表現
+                    event_list = []
                     for event, count in counter.most_common():
-                        descriptions.append(f"{event} {count}回")
-                    time_blocks[slot] = descriptions
+                        event_list.append({"event": event, "count": count})
+                    time_blocks[slot] = event_list
                 else:
-                    time_blocks[slot] = ["無音"]
+                    # データは存在するがイベントが空の場合
+                    time_blocks[slot] = []
             else:
-                time_blocks[slot] = ["データなし"]
+                # データが存在しない場合はnull
+                time_blocks[slot] = None
         
         return time_blocks
     
-    def aggregate_data(self, slot_data: Dict[str, Dict]) -> Dict:
+    def aggregate_data(self, slot_data: Dict[str, List[Dict]]) -> Dict:
         """収集したデータを集計して結果形式を生成"""
-        print("データ集計開始...")
+        print("📊 データ集計開始...")
         
         # 全イベントを収集
         all_events = []
-        for data in slot_data.values():
-            events = self._extract_events(data)
+        for events_data in slot_data.values():
+            events = self._extract_events_from_supabase(events_data)
             all_events.extend(events)
         
         # summary_ranking作成
@@ -193,51 +147,56 @@ class SEDAggregator:
             "time_blocks": time_blocks
         }
         
-        print(f"集計完了: 総イベント数 {len(all_events)}")
+        print(f"✅ 集計完了: 総イベント数 {len(all_events)}")
         return result
     
-    def save_result(self, result: Dict, device_id: str, date: str) -> str:
-        """結果をローカルファイルに保存"""
-        # 保存パスを構築
-        base_path = Path(f"/Users/kaya.matsumoto/data/data_accounts/{device_id}/{date}/sed-summary")
-        base_path.mkdir(parents=True, exist_ok=True)
-        
-        output_path = base_path / "result.json"
-        
-        # JSON保存
-        with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(result, f, ensure_ascii=False, indent=2)
-        
-        print(f"結果保存完了: {output_path}")
-        return str(output_path)
+    async def save_to_supabase(self, result: Dict, device_id: str, date: str) -> bool:
+        """結果をSupabaseのbehavior_summaryテーブルに保存"""
+        try:
+            # Supabaseにデータを保存（UPSERT）
+            response = self.supabase.table('behavior_summary').upsert({
+                'device_id': device_id,
+                'date': date,
+                'summary_ranking': result['summary_ranking'],
+                'time_blocks': result['time_blocks']
+            }).execute()
+            
+            print(f"💾 Supabase保存完了: behavior_summary テーブル")
+            print(f"   device_id: {device_id}, date: {date}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Supabase保存エラー: {e}")
+            return False
     
-    async def run(self, device_id: str, date: str) -> str:
+    async def run(self, device_id: str, date: str) -> bool:
         """メイン処理実行"""
-        print(f"SED集計処理開始: {device_id}, {date}")
+        print(f"🚀 SED集計処理開始: {device_id}, {date}")
         
-        # データ取得
+        # Supabaseからデータ取得
         slot_data = await self.fetch_all_data(device_id, date)
         
         if not slot_data:
-            print("取得できたデータがありません")
-            return ""
+            print("⚠️ 取得できたデータがありません")
+            return False
         
         # データ集計
         result = self.aggregate_data(slot_data)
         
-        # 結果保存
-        output_path = self.save_result(result, device_id, date)
+        # Supabaseに保存
+        success = await self.save_to_supabase(result, device_id, date)
         
-        print("SED集計処理完了")
-        return output_path
+        if success:
+            print("🎉 SED集計処理完了")
+        
+        return success
 
 
 async def main():
     """コマンドライン実行用メイン関数"""
-    parser = argparse.ArgumentParser(description="SED データ集計ツール")
-    parser.add_argument("device_id", help="デバイスID（例: device123）")
+    parser = argparse.ArgumentParser(description="SED データ集計ツール (Supabase版)")
+    parser.add_argument("device_id", help="デバイスID（例: d067d407-cf73-4174-a9c1-d91fb60d64d0）")
     parser.add_argument("date", help="対象日付（YYYY-MM-DD形式）")
-    parser.add_argument("--base-url", default="https://api.hey-watch.me/download-sed", help="SED専用Vault API ベースURL")
     
     args = parser.parse_args()
     
@@ -245,19 +204,19 @@ async def main():
     try:
         datetime.strptime(args.date, "%Y-%m-%d")
     except ValueError:
-        print("エラー: 日付はYYYY-MM-DD形式で指定してください")
+        print("❌ エラー: 日付はYYYY-MM-DD形式で指定してください")
         return
     
     # 集計実行
-    aggregator = SEDAggregator(args.base_url)
-    output_path = await aggregator.run(args.device_id, args.date)
+    aggregator = SEDAggregator()
+    success = await aggregator.run(args.device_id, args.date)
     
-    if output_path:
+    if success:
         print(f"\n✅ 処理完了")
-        print(f"結果ファイル: {output_path}")
+        print(f"💾 データはSupabaseのbehavior_summaryテーブルに保存されました")
     else:
         print("\n❌ 処理失敗")
 
 
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    asyncio.run(main())
