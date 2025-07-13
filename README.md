@@ -313,11 +313,168 @@ ValueError: SUPABASE_URLおよびSUPABASE_KEYが設定されていません
 - ✅ **スケーラビリティ**: 無制限のデータ処理
 - ✅ **統合性**: 他システムとのシームレス連携
 
+## 🚢 本番環境デプロイ
+
+### 📍 デプロイ先情報
+- **サーバー**: AWS EC2 (3.24.16.82)
+- **API URL**: http://3.24.16.82:8010
+- **APIドキュメント**: http://3.24.16.82:8010/docs
+- **サービス名**: api-sed-aggregator
+
+### 🐳 Dockerを使用したデプロイ手順
+
+#### 1. Docker imageのビルド
+```bash
+# ローカルでビルド
+docker build -t api-sed-aggregator:latest .
+
+# イメージをtarファイルに保存
+docker save api-sed-aggregator:latest | gzip > api-sed-aggregator.tar.gz
+```
+
+#### 2. EC2へのデプロイ
+```bash
+# ファイルをEC2に転送
+scp -i ~/watchme-key.pem api-sed-aggregator.tar.gz ubuntu@3.24.16.82:~/
+scp -i ~/watchme-key.pem .env.production ubuntu@3.24.16.82:~/.env
+
+# EC2でイメージをロード
+ssh -i ~/watchme-key.pem ubuntu@3.24.16.82
+docker load < api-sed-aggregator.tar.gz
+
+# コンテナを起動（初回のみ）
+docker run -d --name api-sed-aggregator -p 8010:8010 --env-file .env --restart unless-stopped api-sed-aggregator:latest
+```
+
+### 🔧 systemdサービス管理
+
+#### サービスの状態確認
+```bash
+sudo systemctl status api-sed-aggregator
+```
+
+#### サービスの制御
+```bash
+# 起動
+sudo systemctl start api-sed-aggregator
+
+# 停止
+sudo systemctl stop api-sed-aggregator
+
+# 再起動
+sudo systemctl restart api-sed-aggregator
+
+# ログ確認（リアルタイム）
+sudo journalctl -u api-sed-aggregator -f
+```
+
+### 🆕 アップデート手順
+```bash
+# 1. 新しいイメージをビルド・転送
+docker build -t api-sed-aggregator:latest .
+docker save api-sed-aggregator:latest | gzip > api-sed-aggregator.tar.gz
+scp -i ~/watchme-key.pem api-sed-aggregator.tar.gz ubuntu@3.24.16.82:~/
+
+# 2. EC2でアップデート
+ssh -i ~/watchme-key.pem ubuntu@3.24.16.82
+docker load < api-sed-aggregator.tar.gz
+sudo systemctl restart api-sed-aggregator
+```
+
+### 🚨 トラブルシューティング
+
+#### サービスが起動しない場合
+```bash
+# エラーログの確認
+sudo journalctl -xeu api-sed-aggregator.service -n 50
+
+# Dockerコンテナの状態確認
+docker ps -a | grep api-sed-aggregator
+
+# 手動でコンテナを起動してエラーを確認
+docker run --rm --name api-sed-aggregator-test -p 8010:8010 --env-file .env api-sed-aggregator:latest
+```
+
+#### ポートが使用中の場合
+```bash
+# ポート使用状況の確認
+sudo lsof -i :8010
+
+# 別のコンテナが使用している場合
+docker ps | grep 8010
+docker stop <CONTAINER_ID>
+```
+
+#### 環境変数の問題
+```bash
+# .envファイルの確認
+cat ~/.env
+
+# 環境変数が正しく読み込まれているか確認
+docker exec api-sed-aggregator env | grep SUPABASE
+```
+
+#### ログの確認方法
+```bash
+# systemdログ
+sudo journalctl -u api-sed-aggregator --since "10 minutes ago"
+
+# Dockerログ
+docker logs api-sed-aggregator --tail 100
+
+# アプリケーションログ（詳細）
+docker logs api-sed-aggregator 2>&1 | grep -E "(ERROR|WARNING|❌)"
+```
+
+### 📊 監視とヘルスチェック
+
+#### APIの稼働確認
+```bash
+# ローカルから
+curl http://3.24.16.82:8010/health
+
+# EC2内部から
+curl http://localhost:8010/health
+```
+
+#### システムリソース確認
+```bash
+# コンテナのリソース使用状況
+docker stats api-sed-aggregator
+
+# システム全体のリソース
+htop
+df -h
+```
+
+## 🔄 v2.0.1 更新内容（2025年7月）
+
+### リファクタリング内容
+1. **不要なアップロード処理の削除**
+   - `upload_sed_summary.py`への依存を削除
+   - ローカルファイルを使用する古い処理を完全に除去
+   - `VERIFY_SSL`環境変数の削除
+
+2. **処理フローの簡素化**
+   - Supabaseへの直接保存のみに統一
+   - エラーハンドリングの改善
+   - プログレス表示の調整（25% → 50%）
+
+3. **本番環境の整備**
+   - systemdサービスとして設定
+   - 自動起動・自動再起動の設定
+   - Dockerコンテナでの安定稼働
+
+### パフォーマンス向上
+- 不要な処理の削除により処理時間が短縮
+- メモリ使用量の削減
+- エラー発生箇所の削減
+
 ## 📞 サポート
 
 **API仕様の詳細:**
-- OpenAPI/Swagger UI: `http://localhost:8010/docs`
-- ReDoc: `http://localhost:8010/redoc`
+- 本番環境 Swagger UI: `http://3.24.16.82:8010/docs`
+- 開発環境 Swagger UI: `http://localhost:8010/docs`
 
 **データベース設計:**
 - behavior_yamnet: 音響イベント生データ
@@ -327,3 +484,4 @@ ValueError: SUPABASE_URLおよびSUPABASE_KEYが設定されていません
 - Supabase統合ベストプラクティス
 - 非同期処理の実装ガイド
 - データベース最適化手法
+- systemd/Dockerでの本番運用

@@ -17,7 +17,6 @@ from datetime import datetime
 import logging
 
 from sed_aggregator import SEDAggregator
-from upload_sed_summary import SEDSummaryUploader
 
 # FastAPIアプリ設定
 app = FastAPI(
@@ -161,7 +160,7 @@ async def execute_sed_analysis(task_id: str, device_id: str, date: str):
         task_status[task_id].update({
             "status": "running",
             "message": "データ収集・集計中...",
-            "progress": 25
+            "progress": 50
         })
         
         logger.info(f"📊 SEDAggregator インスタンス作成中...")
@@ -191,21 +190,6 @@ async def execute_sed_analysis(task_id: str, device_id: str, date: str):
             return
         
         logger.info(f"✅ データ収集・Supabase保存成功")
-        
-        # ステップ2: アップロード
-        task_status[task_id].update({
-            "status": "running",
-            "message": "アップロード中...",
-            "progress": 75
-        })
-        
-        logger.info(f"☁️ アップロード開始...")
-        # SSL検証を無効化してダッシュボード環境での接続問題を回避
-        verify_ssl = os.getenv('VERIFY_SSL', 'false').lower() == 'true'
-        uploader = SEDSummaryUploader(verify_ssl=verify_ssl)
-        upload_result = await uploader.run(device_id, date)
-        logger.info(f"📤 アップロード結果: {upload_result}")
-        
         logger.info(f"🎉 分析完了")
         
         # 成功
@@ -215,7 +199,6 @@ async def execute_sed_analysis(task_id: str, device_id: str, date: str):
             "progress": 100,
             "result": {
                 "message": "データはSupabaseのbehavior_summaryテーブルに保存されました",
-                "upload": upload_result,
                 "device_id": device_id,
                 "date": date
             }
