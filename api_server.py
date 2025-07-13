@@ -167,17 +167,27 @@ async def execute_sed_analysis(task_id: str, device_id: str, date: str):
         logger.info(f"📊 SEDAggregator インスタンス作成中...")
         aggregator = SEDAggregator()
         logger.info(f"📡 Supabaseからデータ取得開始...")
-        success = await aggregator.run(device_id, date)
-        logger.info(f"📄 データ取得結果: success={success}")
+        result = await aggregator.run(device_id, date)
+        logger.info(f"📄 データ取得結果: {result}")
         
-        if not success:
-            logger.error(f"❌ データ収集・保存失敗")
-            task_status[task_id].update({
-                "status": "failed",
-                "message": "データ収集に失敗しました",
-                "error": "取得できたデータがありません、またはSupabase保存エラー",
-                "progress": 100
-            })
+        if not result["success"]:
+            logger.error(f"❌ データ収集・保存失敗: {result.get('message', '不明なエラー')}")
+            
+            # データがない場合の適切なエラーメッセージ
+            if result.get("reason") == "no_data":
+                task_status[task_id].update({
+                    "status": "failed",
+                    "message": f"{date}のデータがありませんでした",
+                    "error": result.get("message", "データが存在しません"),
+                    "progress": 100
+                })
+            else:
+                task_status[task_id].update({
+                    "status": "failed",
+                    "message": "データ収集に失敗しました",
+                    "error": result.get("message", "不明なエラー"),
+                    "progress": 100
+                })
             return
         
         logger.info(f"✅ データ収集・Supabase保存成功")
