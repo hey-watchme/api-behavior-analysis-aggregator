@@ -194,29 +194,35 @@ python test_supabase.py
 ```python
 import requests
 
-# 分析開始
-response = requests.post("http://localhost:8010/analysis/sed", json={
+# 本番環境での分析開始
+response = requests.post("https://api.hey-watch.me/behavior-aggregator/analysis/sed", json={
     "device_id": "d067d407-cf73-4174-a9c1-d91fb60d64d0",
-    "date": "2025-07-07"
+    "date": "2025-07-15"
 })
 
 task_id = response.json()["task_id"]
 
 # 結果確認
-result = requests.get(f"http://localhost:8010/analysis/sed/{task_id}")
+result = requests.get(f"https://api.hey-watch.me/behavior-aggregator/analysis/sed/{task_id}")
 print(result.json())
 ```
 
 ### cURL例
 ```bash
-# 分析開始
-TASK_ID=$(curl -s -X POST "http://localhost:8010/analysis/sed" \
+# 本番環境での分析開始
+TASK_ID=$(curl -s -X POST "https://api.hey-watch.me/behavior-aggregator/analysis/sed" \
   -H "Content-Type: application/json" \
-  -d '{"device_id": "d067d407-cf73-4174-a9c1-d91fb60d64d0", "date": "2025-07-07"}' \
+  -d '{"device_id": "d067d407-cf73-4174-a9c1-d91fb60d64d0", "date": "2025-07-15"}' \
   | jq -r '.task_id')
 
 # 結果確認
-curl "http://localhost:8010/analysis/sed/$TASK_ID" | jq '.'
+curl "https://api.hey-watch.me/behavior-aggregator/analysis/sed/$TASK_ID" | jq '.'
+
+# 開発環境での分析開始（ローカル）
+TASK_ID=$(curl -s -X POST "http://localhost:8010/analysis/sed" \
+  -H "Content-Type: application/json" \
+  -d '{"device_id": "d067d407-cf73-4174-a9c1-d91fb60d64d0", "date": "2025-07-15"}' \
+  | jq -r '.task_id')
 ```
 
 ## 📊 データフォーマット
@@ -317,8 +323,9 @@ ValueError: SUPABASE_URLおよびSUPABASE_KEYが設定されていません
 
 ### 📍 デプロイ先情報
 - **サーバー**: AWS EC2 (3.24.16.82)
-- **API URL**: http://3.24.16.82:8010
-- **APIドキュメント**: http://3.24.16.82:8010/docs
+- **直接アクセス URL**: http://3.24.16.82:8010
+- **本番 API URL**: https://api.hey-watch.me/behavior-aggregator/
+- **APIドキュメント**: https://api.hey-watch.me/behavior-aggregator/docs
 - **サービス名**: api-sed-aggregator
 
 ### 🐳 Dockerを使用したデプロイ手順
@@ -430,7 +437,10 @@ docker logs api-sed-aggregator 2>&1 | grep -E "(ERROR|WARNING|❌)"
 
 #### APIの稼働確認
 ```bash
-# ローカルから
+# 本番環境（推奨）
+curl https://api.hey-watch.me/behavior-aggregator/health
+
+# 直接アクセス（開発・デバッグ用）
 curl http://3.24.16.82:8010/health
 
 # EC2内部から
@@ -447,9 +457,29 @@ htop
 df -h
 ```
 
-## 🔄 v2.0.1 更新内容（2025年7月）
+## 🔄 更新履歴
 
-### リファクタリング内容
+### v2.0.2 更新内容（2025年7月15日）
+
+#### 🌐 本番環境URLの整備
+1. **Nginx リバースプロキシの設定**
+   - 本番環境URL: `https://api.hey-watch.me/behavior-aggregator/`
+   - SSL/TLS証明書による安全な通信
+   - CORS設定による外部アクセス対応
+
+2. **エンドポイントの統一**
+   - 本番環境での統一されたAPIアクセス
+   - 直接アクセスURL: `http://3.24.16.82:8010`（開発・デバッグ用）
+   - ドキュメント: `https://api.hey-watch.me/behavior-aggregator/docs`
+
+3. **運用実績の確認**
+   - device_id: `d067d407-cf73-4174-a9c1-d91fb60d64d0`
+   - 2025-07-15 データの正常処理を確認
+   - Supabaseへの保存正常動作を確認
+
+### v2.0.1 更新内容（2025年7月）
+
+#### リファクタリング内容
 1. **不要なアップロード処理の削除**
    - `upload_sed_summary.py`への依存を削除
    - ローカルファイルを使用する古い処理を完全に除去
@@ -465,7 +495,7 @@ df -h
    - 自動起動・自動再起動の設定
    - Dockerコンテナでの安定稼働
 
-### パフォーマンス向上
+#### パフォーマンス向上
 - 不要な処理の削除により処理時間が短縮
 - メモリ使用量の削減
 - エラー発生箇所の削減
@@ -473,7 +503,8 @@ df -h
 ## 📞 サポート
 
 **API仕様の詳細:**
-- 本番環境 Swagger UI: `http://3.24.16.82:8010/docs`
+- 本番環境 Swagger UI: `https://api.hey-watch.me/behavior-aggregator/docs`
+- 直接アクセス Swagger UI: `http://3.24.16.82:8010/docs`  
 - 開発環境 Swagger UI: `http://localhost:8010/docs`
 
 **データベース設計:**
