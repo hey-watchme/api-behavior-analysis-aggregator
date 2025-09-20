@@ -328,29 +328,42 @@ ValueError: SUPABASE_URLおよびSUPABASE_KEYが設定されていません
 - **APIドキュメント**: https://api.hey-watch.me/behavior-aggregator/docs
 - **サービス名**: api-sed-aggregator
 
-### 🐳 Dockerを使用したデプロイ手順
+### 🐳 ECRを使用した本番デプロイ手順
 
-#### 1. Docker imageのビルド
+#### 1. ECRへのログイン
+```bash
+# シドニーリージョンのECRにログイン
+aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin 754724220380.dkr.ecr.ap-southeast-2.amazonaws.com
+```
+
+#### 2. Docker imageのビルドとプッシュ
 ```bash
 # ローカルでビルド
 docker build -t api-sed-aggregator:latest .
 
-# イメージをtarファイルに保存
-docker save api-sed-aggregator:latest | gzip > api-sed-aggregator.tar.gz
+# ECR用にタグ付け
+docker tag api-sed-aggregator:latest 754724220380.dkr.ecr.ap-southeast-2.amazonaws.com/watchme-api-sed-aggregator:latest
+
+# ECRにプッシュ
+docker push 754724220380.dkr.ecr.ap-southeast-2.amazonaws.com/watchme-api-sed-aggregator:latest
 ```
 
-#### 2. EC2へのデプロイ
+#### 3. EC2でのデプロイ（docker-compose使用）
 ```bash
-# ファイルをEC2に転送
-scp -i ~/watchme-key.pem api-sed-aggregator.tar.gz ubuntu@3.24.16.82:~/
-scp -i ~/watchme-key.pem .env.production ubuntu@3.24.16.82:~/.env
-
-# EC2でイメージをロード
+# EC2にSSH接続
 ssh -i ~/watchme-key.pem ubuntu@3.24.16.82
-docker load < api-sed-aggregator.tar.gz
 
-# コンテナを起動（初回のみ）
-docker run -d --name api-sed-aggregator -p 8010:8010 --env-file .env --restart unless-stopped api-sed-aggregator:latest
+# プロジェクトディレクトリに移動
+cd /home/ubuntu/api-sed-aggregator
+
+# 最新イメージをプル
+docker-compose -f docker-compose.prod.yml pull
+
+# コンテナを再起動
+docker-compose -f docker-compose.prod.yml up -d
+
+# ログ確認
+docker-compose -f docker-compose.prod.yml logs -f
 ```
 
 ### 🔧 systemdサービス管理
@@ -377,15 +390,18 @@ sudo journalctl -u api-sed-aggregator -f
 
 ### 🆕 アップデート手順
 ```bash
-# 1. 新しいイメージをビルド・転送
+# 1. 新しいイメージをビルド
 docker build -t api-sed-aggregator:latest .
-docker save api-sed-aggregator:latest | gzip > api-sed-aggregator.tar.gz
-scp -i ~/watchme-key.pem api-sed-aggregator.tar.gz ubuntu@3.24.16.82:~/
 
-# 2. EC2でアップデート
+# 2. ECRにプッシュ
+docker tag api-sed-aggregator:latest 754724220380.dkr.ecr.ap-southeast-2.amazonaws.com/watchme-api-sed-aggregator:latest
+docker push 754724220380.dkr.ecr.ap-southeast-2.amazonaws.com/watchme-api-sed-aggregator:latest
+
+# 3. EC2でアップデート
 ssh -i ~/watchme-key.pem ubuntu@3.24.16.82
-docker load < api-sed-aggregator.tar.gz
-sudo systemctl restart api-sed-aggregator
+cd /home/ubuntu/api-sed-aggregator
+docker-compose -f docker-compose.prod.yml pull
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
 ### 🚨 トラブルシューティング

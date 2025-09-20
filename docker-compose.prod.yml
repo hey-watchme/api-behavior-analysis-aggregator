@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  api:
+    image: 754724220380.dkr.ecr.ap-southeast-2.amazonaws.com/watchme-api-sed-aggregator:latest
+    container_name: api-sed-aggregator
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:8010:8010"  # localhostのみでリッスン
+    networks:
+      - watchme-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8010/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    mem_limit: 512m
+    cpus: 0.5
+
+networks:
+  watchme-network:
+    external: true

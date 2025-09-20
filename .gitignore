@@ -29,3 +29,9 @@ Thumbs.db
 
 # Test files
 test_*.py
+
+# Docker artifacts
+*.tar.gz
+
+# Deployment scripts (temporary)
+deploy.sh

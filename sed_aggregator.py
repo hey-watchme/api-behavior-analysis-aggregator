@@ -589,13 +589,26 @@ class SEDAggregator:
             return {}
     
     def _extract_events_from_supabase(self, events_data: List[Dict]) -> List[str]:
-        """Supabaseのeventsカラムから音響イベントラベルを抽出"""
+        """Supabaseのeventsカラムから音響イベントラベルを抽出（新形式対応）"""
         events = []
         
-        # events_dataは[{"label": "Speech", "prob": 0.98}, ...]の形式
-        for event in events_data:
-            if isinstance(event, dict) and 'label' in event:
-                events.append(event['label'])
+        # デバッグ: データ形式を確認
+        if events_data and len(events_data) > 0:
+            first_item = events_data[0]
+            # 旧形式チェック: {"label": "xxx", "prob": 0.xx}
+            if 'label' in first_item and 'prob' in first_item:
+                # 旧形式の処理
+                for event in events_data:
+                    if isinstance(event, dict) and 'label' in event:
+                        events.append(event['label'])
+            # 新形式チェック: {"time": 0.0, "events": [...]}
+            elif 'time' in first_item and 'events' in first_item:
+                # 新形式の処理
+                for time_block in events_data:
+                    if isinstance(time_block, dict) and 'events' in time_block:
+                        for event in time_block['events']:
+                            if isinstance(event, dict) and 'label' in event:
+                                events.append(event['label'])
         
         return events
     
