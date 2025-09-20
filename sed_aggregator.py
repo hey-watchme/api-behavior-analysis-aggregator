@@ -2,7 +2,7 @@
 """
 SED（Sound Event Detection）データ集計ツール
 
-Supabaseのbehavior_yamnetテーブルから音響イベント検出データを収集し、
+Supabaseのbehavior_yamnetテーブル（現在はAST結果を格納）から音響イベント検出データを収集し、
 日次集計結果をローカルに保存する。
 """
 
@@ -20,8 +20,18 @@ from dotenv import load_dotenv
 # 環境変数を読み込み
 load_dotenv()
 
-# YAMNetラベルの日本語訳対応表
-YAMNET_LABEL_MAP = {
+# 除外するイベントラベルのリスト
+# これらのイベントは集計から完全に除外されます（ノイズや誤検出を減らすため）
+EXCLUDED_EVENTS = [
+    'Snake',       # ヘビ - 通常の生活環境では考えにくい
+    'Insect',      # 昆虫 - 誤検出が多い
+    'Cricket',     # コオロギ - 誤検出が多い
+    'White noise', # ホワイトノイズ - 無意味な環境ノイズ
+    'Mains hum',   # 電源ハム音 - 電気的ノイズ（50/60Hz）
+]
+
+# AudioSetラベルの日本語訳対応表（AST/YAMNet共通）
+AUDIOSET_LABEL_MAP = {
     'Speech': 'スピーチ・話し声',
     'Child speech, kid speaking': '子供の話し声',
     'Conversation': '会話',
@@ -55,6 +65,7 @@ YAMNET_LABEL_MAP = {
     'Synthetic singing': '合成歌声',
     'Rapping': 'ラップ',
     'Humming': 'ハミング・鼻歌',
+    'Hum': 'ブーン音・低周波ノイズ',
     'Groan': 'うめき声',
     'Grunt': 'うなり声（不満など）',
     'Whistling': '口笛',
@@ -552,7 +563,7 @@ class SEDAggregator:
 
     def _translate_event_name(self, event_name: str) -> str:
         """イベント名を日本語に翻訳する"""
-        return YAMNET_LABEL_MAP.get(event_name, event_name) # マップにない場合は元の名前を返す
+        return AUDIOSET_LABEL_MAP.get(event_name, event_name) # マップにない場合は元の名前を返す
     
     def _generate_time_slots(self) -> List[str]:
         """30分スロットのリストを生成（00-00 から 23-30 まで）"""
@@ -589,7 +600,10 @@ class SEDAggregator:
             return {}
     
     def _extract_events_from_supabase(self, events_data: List[Dict]) -> List[str]:
-        """Supabaseのeventsカラムから音響イベントラベルを抽出（新形式対応）"""
+        """Supabaseのeventsカラムから音響イベントラベルを抽出（新形式対応）
+        
+        除外リスト（EXCLUDED_EVENTS）に含まれるイベントは自動的にフィルタリングされます。
+        """
         events = []
         
         # デバッグ: データ形式を確認
@@ -600,7 +614,10 @@ class SEDAggregator:
                 # 旧形式の処理
                 for event in events_data:
                     if isinstance(event, dict) and 'label' in event:
-                        events.append(event['label'])
+                        label = event['label']
+                        # 除外リストに含まれていないイベントのみ追加
+                        if label not in EXCLUDED_EVENTS:
+                            events.append(label)
             # 新形式チェック: {"time": 0.0, "events": [...]}
             elif 'time' in first_item and 'events' in first_item:
                 # 新形式の処理
@@ -608,7 +625,10 @@ class SEDAggregator:
                     if isinstance(time_block, dict) and 'events' in time_block:
                         for event in time_block['events']:
                             if isinstance(event, dict) and 'label' in event:
-                                events.append(event['label'])
+                                label = event['label']
+                                # 除外リストに含まれていないイベントのみ追加
+                                if label not in EXCLUDED_EVENTS:
+                                    events.append(label)
         
         return events
     

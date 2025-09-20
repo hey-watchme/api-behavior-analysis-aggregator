@@ -1,0 +1,34 @@
+FROM python:3.11-slim
+
+# 作業ディレクトリの設定
+WORKDIR /app
+
+# システムパッケージの更新とcurlとgccのインストール
+RUN apt-get update && apt-get install -y \
+    curl \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Pythonの依存関係をコピーしてインストール
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# アプリケーションコードをコピー
+COPY api_server.py .
+COPY sed_aggregator.py .
+COPY upload_sed_summary.py .
+
+# ポート8010を公開
+EXPOSE 8010
+
+# 環境変数の設定
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+# ヘルスチェック（curlを使用）
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8010/health || exit 1
+
+# アプリケーションの起動
+CMD ["python", "api_server.py"]
