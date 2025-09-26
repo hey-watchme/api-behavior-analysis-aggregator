@@ -28,11 +28,128 @@ EXCLUDED_EVENTS = [
     'Cricket',     # コオロギ - 誤検出が多い
     'White noise', # ホワイトノイズ - 無意味な環境ノイズ
     'Mains hum',   # 電源ハム音 - 電気的ノイズ（50/60Hz）
+    'Mouse',       # マウス - 誤検出が多いノイズ
+    'Arrow',       # 矢 - 意味不明なイベント
 ]
+
+# 優先順位カテゴリの定義（生活音表示用）
+PRIORITY_CATEGORIES = {
+    # 優先度1: 生体反応（健康モニタリングに重要）
+    'biometric': [
+        'Cough', 'Throat clearing', 'Sneeze', 'Sniff', 'Snoring', 'Breathing',
+        'Gasp', 'Sigh', 'Hiccup', 'Burp, eructation', 'Yawn', 'Wheeze',
+        'Pant', 'Snore', 'Chewing, mastication', 'Heartbeat'
+    ],
+    # 優先度2: 声・会話（社会活動の指標）
+    'voice': [
+        'Speech', 'Child speech, kid speaking', 'Conversation', 'Narration, monologue',
+        'Babbling', 'Laughter', 'Baby laughter', 'Baby cry, infant cry',
+        'Whimper', 'Crying, sobbing', 'Screaming', 'Shout', 'Children shouting',
+        'Children playing', 'Whispering', 'Singing', 'Humming', 'Chatter',
+        'Speech, human voice', 'Crowd', 'Call', 'Telephone bell ringing'
+    ],
+    # 優先度3: 生活音（日常活動の指標）
+    'daily_life': [
+        'Boiling', 'Water tap, faucet', 'Water', 'Pour', 'Dishes, pots, and pans',
+        'Cutlery, silverware', 'Cupboard open or close', 'Microwave oven',
+        'Blender', 'Sink (filling or washing)', 'Frying (food)', 'Kettle boiling',
+        'Dishwasher', 'Door', 'Footsteps', 'Walk, footsteps', 'Keys jangling',
+        'Drawer open or close', 'Typing', 'Computer keyboard', 'Toilet flush',
+        'Television', 'Vacuum cleaner', 'Washing machine', 'Hair dryer',
+        'Electric toothbrush', 'Bathtub (filling or washing)', 'Shower'
+    ]
+}
+
+# 音の統合マッピング（類似音を統一）
+SOUND_CONSOLIDATION = {
+    # 水関連を「水の音」に統合
+    'Water tap, faucet': '水の音',
+    'Sink (filling or washing)': '水の音',
+    'Water': '水の音',
+    'Pour': '水の音',
+    'Drip': '水の音',
+    
+    # タイピング・キーボード関連を「タイピング」に統合
+    'Computer keyboard': 'タイピング',
+    'Typing (computer)': 'タイピング',
+    'Typing on a computer keyboard': 'タイピング',
+    'Typing': 'タイピング',
+    
+    # 動物関連を「動物」に統合
+    'Domestic animals, pets': '動物',
+    'Livestock, farm animals, working animals': '動物',
+    'Animal': '動物',
+    'Pet': '動物',
+    'Animal sounds': '動物',
+    
+    # 歩行関連を「足音」に統合
+    'Walk, footsteps': '足音',
+    'Footsteps': '足音',
+    'Running': '足音',
+    'Walking': '足音',
+    
+    # ドア関連を「ドア」に統合
+    'Doorbell': 'ドア',
+    'Door knocker': 'ドア',
+    'Door lock, sign in, sign off': 'ドア',
+    'Door': 'ドア',
+    
+    # 呼吸関連を「呼吸音」に統合
+    'Respiratory sounds': '呼吸音',
+    'Breathing': '呼吸音',
+    
+    # 咳関連を「咳」に統合
+    'Cough': '咳',
+    'Throat clearing': '咳',
+    
+    # 鳥関連を「鳥」に統合
+    'Bird': '鳥',
+    'Bird vocalization, bird call, bird song': '鳥',
+    'Bird, bird song': '鳥',
+    'Chirp, tweet': '鳥',
+    
+    # 食器・調理器具関連を統合
+    'Dishes, pots, and pans': '食器の音',
+    'Cutlery, silverware': '食器の音',
+    'Clinking': '食器の音',
+    
+    # テレビ・音声メディアを統合
+    'Television': 'テレビ',
+    'Radio': 'テレビ',
+    
+    # 子供関連を統合
+    'Child speech, kid speaking': '子供の声',
+    'Children shouting': '子供の声',
+    'Children playing': '子供の声',
+    'Baby cry, infant cry': '赤ちゃんの泣き声',
+    'Baby laughter': '赤ちゃんの笑い声',
+    
+    # 音楽関連を統合
+    'Music': '音楽',
+    'Musical instrument': '音楽',
+    'Singing': '歌声',
+    'Song': '歌声',
+    
+    # 会話・話し声を統合
+    'Speech': '話し声',
+    'Conversation': '話し声',
+    'Speech, human voice': '話し声',
+    'Narration, monologue': '話し声',
+    
+    # 笑い声を統合
+    'Laughter': '笑い声',
+    'Chuckle, chortle': '笑い声',
+    'Giggle': '笑い声',
+    
+    # 引き出し・戸棚関連を統合
+    'Drawer open or close': '戸棚・引き出し',
+    'Cupboard open or close': '戸棚・引き出し',
+    'Filing (rasp)': '戸棚・引き出し',
+}
 
 # AudioSetラベルの日本語訳対応表（AST/YAMNet共通）
 AUDIOSET_LABEL_MAP = {
-    'Speech': 'スピーチ・話し声',
+    'Speech': '話し声',
     'Child speech, kid speaking': '子供の話し声',
     'Conversation': '会話',
     'Narration, monologue': 'ナレーション・独り言',
@@ -65,7 +182,7 @@ AUDIOSET_LABEL_MAP = {
     'Synthetic singing': '合成歌声',
     'Rapping': 'ラップ',
     'Humming': 'ハミング・鼻歌',
-    'Hum': 'ブーン音・低周波ノイズ',
+    'Hum': '低周波ノイズ',
     'Groan': 'うめき声',
     'Grunt': 'うなり声（不満など）',
     'Whistling': '口笛',
@@ -74,6 +191,7 @@ AUDIOSET_LABEL_MAP = {
     'Pant': 'あえぎ声',
     'Snore': 'いびき',
     'Cough': '咳',
+    'Throat clearing': '咳',  # 咽頭クリア - 咳と統合
     'Sneeze': 'くしゃみ',
     'Sniff': '鼻をすする音',
     'Run': '走る音',
@@ -122,7 +240,7 @@ AUDIOSET_LABEL_MAP = {
     'Goat': 'ヤギ',
     'Bleat': 'ヤギ・羊の鳴き声',
     'Sheep': '羊',
-    'Fowl': '家禽',
+    'Fowl': 'ニワトリ',
     'Chicken, rooster': 'ニワトリ・雄鶏',
     'Cluck': 'コッコという鳴き声',
     'Crowing, cock-a-doodle-doo': '雄鶏の鳴き声',
@@ -355,6 +473,7 @@ AUDIOSET_LABEL_MAP = {
     'Water': '水の音',
     'Rain': '雨',
     'Raindrop': '雨だれ',
+    'Patter': 'パラパラ音',
     'Rain on surface': '雨が何かに当たる音',
     'Stream': '小川のせせらぎ',
     'Gurgle': 'ゴボゴボいう音',
@@ -424,7 +543,7 @@ AUDIOSET_LABEL_MAP = {
     'Shatter (glass)': 'ガラスが割れる音',
     'Liquid (splash)': '液体（飛沫）',
     'Typing (computer)': 'タイピング（コンピュータ）',
-    'Speech noise': 'スピーチノイズ',
+    'Speech noise': '話し声ノイズ',
     'Inside, small room': '室内（小部屋）',
     'Inside, large room or hall': '室内（大部屋・ホール）',
     'Outside, urban or manmade': '屋外（都市・人工）',
@@ -445,6 +564,7 @@ AUDIOSET_LABEL_MAP = {
     'Doorbell': 'ドアベル',
     'Door knocker': 'ドアノッカー',
     'Door lock, sign in, sign off': 'ドアの施錠・開錠音',
+    'Cupboard open or close': '食器棚の開閉',
     'Squeal': 'キーキーいう音',
     'Vehicle (road)': '車両（道路）',
     'Car alarm': '自動車の警報',
@@ -491,7 +611,7 @@ AUDIOSET_LABEL_MAP = {
     'Street': '通り',
     'Alley': '路地',
     'Park': '公園',
-    'Speech, human voice': 'スピーチ・人の声',
+    'Speech, human voice': '話し声・人の声',
     'Male speech, man speaking': '男性の話し声',
     'Female speech, woman speaking': '女性の話し声',
     'Boy': '少年の声',
@@ -562,7 +682,11 @@ class SEDAggregator:
         print(f"✅ Supabase接続設定完了")
 
     def _translate_event_name(self, event_name: str) -> str:
-        """イベント名を日本語に翻訳する"""
+        """イベント名を日本語に翻訳する（音の統合も適用）"""
+        # まず統合マッピングをチェック
+        if event_name in SOUND_CONSOLIDATION:
+            return SOUND_CONSOLIDATION[event_name]
+        # 次に通常の翻訳マッピングをチェック
         return AUDIOSET_LABEL_MAP.get(event_name, event_name) # マップにない場合は元の名前を返す
     
     def _generate_time_slots(self) -> List[str]:
@@ -633,27 +757,64 @@ class SEDAggregator:
         return events
     
     def _create_summary_ranking(self, all_events: List[str]) -> List[Dict[str, int]]:
-        """全体イベントからトップ5ランキングを作成"""
+        """優先順位に基づいて生活音リストを作成（最大10件）"""
         counter = Counter(all_events)
-        top_5 = counter.most_common(5)
+        result = []
+        used_events = set()
         
-        ranking = []
-        other_count = 0
+        # 優先度1: 生体反応（全て含める）
+        for event in PRIORITY_CATEGORIES['biometric']:
+            if event in counter and event not in used_events:
+                translated_event = self._translate_event_name(event)
+                result.append({"event": translated_event, "count": counter[event]})
+                used_events.add(event)
         
-        for event, count in counter.items():
-            translated_event = self._translate_event_name(event)
-            if (event, count) in top_5:
-                ranking.append({"event": translated_event, "count": count})
-            else:
-                other_count += count
+        # 優先度2: 声・会話（残り枠に入れる）
+        if len(result) < 10:
+            voice_events = []
+            for event in PRIORITY_CATEGORIES['voice']:
+                if event in counter and event not in used_events:
+                    voice_events.append((event, counter[event]))
+            # 声関連は出現回数順でソート
+            voice_events.sort(key=lambda x: x[1], reverse=True)
+            for event, count in voice_events:
+                if len(result) >= 10:
+                    break
+                translated_event = self._translate_event_name(event)
+                result.append({"event": translated_event, "count": count})
+                used_events.add(event)
         
-        if other_count > 0:
-            ranking.append({"event": "その他", "count": other_count})
+        # 優先度3: 生活音（残り枠に入れる）
+        if len(result) < 10:
+            daily_events = []
+            for event in PRIORITY_CATEGORIES['daily_life']:
+                if event in counter and event not in used_events:
+                    daily_events.append((event, counter[event]))
+            # 生活音も出現回数順でソート
+            daily_events.sort(key=lambda x: x[1], reverse=True)
+            for event, count in daily_events:
+                if len(result) >= 10:
+                    break
+                translated_event = self._translate_event_name(event)
+                result.append({"event": translated_event, "count": count})
+                used_events.add(event)
         
-        # ランキングを出現回数でソート
-        ranking.sort(key=lambda x: x['count'], reverse=True)
+        # 優先度4: その他（残り枠に入れる）
+        if len(result) < 10:
+            other_events = []
+            for event, count in counter.items():
+                if event not in used_events:
+                    other_events.append((event, count))
+            # その他も出現回数順でソート
+            other_events.sort(key=lambda x: x[1], reverse=True)
+            for event, count in other_events:
+                if len(result) >= 10:
+                    break
+                translated_event = self._translate_event_name(event)
+                result.append({"event": translated_event, "count": count})
+                used_events.add(event)
         
-        return ranking
+        return result
     
     def _create_time_blocks(self, slot_data: Dict[str, List[Dict]]) -> Dict[str, Optional[List[Dict[str, Any]]]]:
         """スロット別のイベント集計を構造化形式で作成"""

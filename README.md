@@ -23,7 +23,7 @@
 2. **イベント抽出**: 各time_block（30分スロット）のeventsからラベルを抽出
 3. **フィルタリング**: 除外リストに基づいてノイズイベントを除去
 4. **集計**: Counter（出現回数カウント）で集計
-5. **ランキング生成**: 上位5件 + その他でランキング作成
+5. **ランキング生成**: 上位10件のランキング作成
 6. **翻訳**: 最後に日本語に翻訳して保存
 
 ### ⚠️ 重要な仕様
@@ -48,7 +48,8 @@ EXCLUDED_EVENTS = [
     'Insect',      # 昆虫 - 誤検出が多い
     'Cricket',     # コオロギ - 誤検出が多い
     'White noise', # ホワイトノイズ - 無意味な環境ノイズ
-    'Mains hum',   # 電源ハム音 - 電気的ノイズ（50/60Hz）
+    'Mains hum',   # 電源ハム音 - 電气的ノイズ（50/60Hz）
+    'Mouse',       # マウス - 誤検出が多いノイズ
 ]
 ```
 
@@ -104,9 +105,12 @@ CREATE TABLE behavior_summary (
 [
   {"event": "Speech", "count": 42},
   {"event": "Silence", "count": 38},
-  {"event": "other", "count": 156}
+  {"event": "Music", "count": 25},
+  {"event": "Typing", "count": 20},
+  {"event": "Laughter", "count": 15}
 ]
 ```
+（最大10件まで表示）
 
 **time_blocksの構造:**
 ```json
@@ -184,7 +188,7 @@ curl http://localhost:8010/health
 - マッピングにないラベルは元の英語のまま表示
 
 ### 最近追加された翻訳
-- **Hum**: 'ブーン音・低周波ノイズ'（2025年9月20日追加）
+- **Hum**: '低周波ノイズ'（2025年9月26日更新）
 
 ### 未翻訳のラベルについて
 マッピングに存在しないラベルは英語のまま表示されます。新しいラベルを発見した場合は、`AUDIOSET_LABEL_MAP`に翻訳を追加してください。
@@ -200,7 +204,7 @@ curl http://localhost:8010/health
 2. **除外リストの実装**
    - ノイズや誤検出の多いイベントを自動除外する機能を追加
    - `EXCLUDED_EVENTS`リストで管理
-   - Snake、Insect、Cricket、White noise、Mains humの5つを除外
+   - Snake、Insect、Cricket、White noise、Mains hum、Mouseの6つを除外
 
 3. **翻訳マッピングの追加**
    - 'Hum'の日本語訳を追加
@@ -209,6 +213,23 @@ curl http://localhost:8010/health
 - 確率しきい値の実装（例：score > 0.1のイベントのみカウント）
 - 除外リストの拡充
 - 翻訳マッピングの完全化
+
+### 2025年9月26日の変更履歴
+
+#### ランキング仕様の改善
+1. **「その他」集計の廃止**
+   - 上位に「その他」が来ることで意味のないランキングになる問題を解消
+   - 具体的なイベント名のみを表示するように変更
+
+2. **トップ5→トップ10への拡張**
+   - より多くのイベント情報を可視化
+   - ダッシュボードでの詳細な行動分析が可能に
+
+3. **除外リストの更新**
+   - 'Mouse'を除外リストに追加（誤検出が多いノイズ）
+
+4. **翻訳の改善**
+   - 'Hum'の翻訳を「ブーン音・低周波ノイズ」から「低周波ノイズ」に簡素化
 
 ## 🌐 API エンドポイント
 
@@ -317,12 +338,16 @@ TASK_ID=$(curl -s -X POST "http://localhost:8010/analysis/sed" \
 ```json
 {
   "summary_ranking": [
-    {"event": "other", "count": 50},
     {"event": "Silence", "count": 7},
     {"event": "Speech", "count": 7},
     {"event": "Inside, small room", "count": 3},
     {"event": "Whack, thwack", "count": 2},
-    {"event": "Arrow", "count": 2}
+    {"event": "Arrow", "count": 2},
+    {"event": "Music", "count": 2},
+    {"event": "Click", "count": 1},
+    {"event": "Typing", "count": 1},
+    {"event": "Door", "count": 1},
+    {"event": "Footsteps", "count": 1}
   ],
   "time_blocks": {
     "00-00": [
@@ -349,7 +374,7 @@ TASK_ID=$(curl -s -X POST "http://localhost:8010/analysis/sed" \
 ### 処理フロー
 1. **データ取得**: Supabase `behavior_yamnet` テーブルから該当日のデータを取得
 2. **データ集計**: 音響イベントラベルを抽出・カウント
-3. **ランキング生成**: トップ5 + その他の summary_ranking を作成
+3. **生活音リスト生成**: 優先順位に基づいた summary_ranking を作成
 4. **時間別集計**: 48スロット別の time_blocks を作成
 5. **データ保存**: Supabase `behavior_summary` テーブルにUPSERT
 
