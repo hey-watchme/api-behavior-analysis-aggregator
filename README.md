@@ -429,16 +429,64 @@ ValueError: SUPABASE_URLおよびSUPABASE_KEYが設定されていません
 - ✅ **スケーラビリティ**: 無制限のデータ処理
 - ✅ **統合性**: 他システムとのシームレス連携
 
+## 🚨 重要: デプロイ方法について
+
+**このAPIは完全自動CI/CDパイプラインで管理されています。**
+- ✅ mainブランチへのpushで自動的に本番環境にデプロイ
+- ✅ 手動デプロイは不要（GitHub Actions が全て処理）
+- ⚠️ 詳細は [CI/CDパイプライン](#cicd-パイプライン) セクションを参照
+
 ## 🚢 本番環境デプロイ
 
 ### 📍 デプロイ先情報
 - **サーバー**: AWS EC2 (3.24.16.82)
-- **直接アクセス URL**: http://3.24.16.82:8010
+- **ECRリポジトリ**: `754724220380.dkr.ecr.ap-southeast-2.amazonaws.com/watchme-api-sed-aggregator`
+- **コンテナ名**: `api-sed-aggregator`
+- **ポート**: 8010
 - **本番 API URL**: https://api.hey-watch.me/behavior-aggregator/
 - **APIドキュメント**: https://api.hey-watch.me/behavior-aggregator/docs
-- **サービス名**: api-sed-aggregator
+- **デプロイ方式**: GitHub Actions → ECR → EC2（完全自動）
 
-### 🐳 ECRを使用した本番デプロイ手順
+## 🚀 CI/CD パイプライン
+
+### デプロイフロー（完全自動化）
+
+```mermaid
+graph LR
+    A[git push main] --> B[GitHub Actions]
+    B --> C[ARM64 Docker Build]
+    C --> D[ECR Push]
+    D --> E[EC2 Auto Deploy]
+    E --> F[Health Check]
+```
+
+### 開発者がやること
+
+```bash
+# 1. コード修正
+code sed_aggregator.py
+
+# 2. コミット＆プッシュ（これだけ！）
+git add .
+git commit -m "feat: 新機能追加"
+git push origin main
+
+# 3. 自動デプロイ完了を待つ（約5分）
+# GitHub Actions: https://github.com/hey-watchme/api-sed-aggregator/actions
+```
+
+### CI/CD設定詳細
+
+- **ワークフローファイル**: `.github/workflows/deploy-to-ecr.yml`
+- **必要なGitHub Secrets**: 組織レベルで設定済み
+  - `AWS_ACCESS_KEY_ID`
+  - `AWS_SECRET_ACCESS_KEY`
+  - `EC2_SSH_PRIVATE_KEY`
+  - `EC2_HOST`
+  - `EC2_USER`
+- **アーキテクチャ**: ARM64対応（EC2 t4g.small）
+
+### 🐳 手動デプロイ手順（緊急時のみ）
 
 #### 1. ECRへのログイン
 ```bash
