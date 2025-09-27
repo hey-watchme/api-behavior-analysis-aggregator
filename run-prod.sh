@@ -32,9 +32,9 @@ if [ ! -f /home/ubuntu/.env ]; then
     cat > /home/ubuntu/.env << EOF
 # Supabase設定
 SUPABASE_URL=https://qvtlwotzuzbavrzqhyvt.supabase.co
-SUPABASE_KEY=your-supabase-key-here
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2dGx3b3R6dXpiYXZyenFoeXZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzODAzMzAsImV4cCI6MjA2Njk1NjMzMH0.g5rqrbxHPw1dKlaGqJ8miIl9gCXyamPajinGCauEI3k
 EOF
-    echo "⚠️ Please update /home/ubuntu/.env with actual Supabase credentials"
+    echo "✅ .env file created with production Supabase credentials"
 fi
 
 # 新しいコンテナを起動
