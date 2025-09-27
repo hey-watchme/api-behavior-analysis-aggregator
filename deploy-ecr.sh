@@ -15,6 +15,30 @@ NC='\033[0m' # No Color
 echo -e "${GREEN}🚀 Behavior Aggregator API - ECRデプロイ開始${NC}"
 echo "=================================="
 
+# 環境変数チェック
+echo -e "\n${YELLOW}🔍 環境設定を確認中...${NC}"
+if [ ! -f ".env" ]; then
+    echo -e "${RED}❌ .envファイルが見つかりません${NC}"
+    echo -e "${YELLOW}📝 .env.exampleを参考に.envファイルを作成してください${NC}"
+    exit 1
+fi
+
+# 環境変数の値をチェック（プレースホルダーのままでないか）
+source .env
+if [ "$SUPABASE_KEY" = "your-supabase-key-here" ] || [ -z "$SUPABASE_KEY" ]; then
+    echo -e "${RED}❌ SUPABASE_KEYが正しく設定されていません${NC}"
+    echo -e "${YELLOW}📝 .envファイルのSUPABASE_KEYを実際の値に更新してください${NC}"
+    exit 1
+fi
+
+if [ -z "$SUPABASE_URL" ]; then
+    echo -e "${RED}❌ SUPABASE_URLが設定されていません${NC}"
+    echo -e "${YELLOW}📝 .envファイルのSUPABASE_URLを設定してください${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✅ 環境変数の確認完了${NC}"
+
 # 1. ECRにログイン
 echo -e "\n${YELLOW}📝 ECRにログイン中...${NC}"
 aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}

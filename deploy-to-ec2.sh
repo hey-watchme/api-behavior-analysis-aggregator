@@ -22,8 +22,25 @@ echo "=================================="
 # 1. .envファイルの存在確認
 if [ ! -f ".env" ]; then
     echo -e "${RED}❌ .envファイルが見つかりません${NC}"
+    echo -e "${YELLOW}📝 .env.exampleを参考に.envファイルを作成してください${NC}"
     exit 1
 fi
+
+# 環境変数の値をチェック
+source .env
+if [ "$SUPABASE_KEY" = "your-supabase-key-here" ] || [ -z "$SUPABASE_KEY" ]; then
+    echo -e "${RED}❌ SUPABASE_KEYが正しく設定されていません${NC}"
+    echo -e "${YELLOW}⚠️  .envファイルのSUPABASE_KEYを実際の値に更新してください${NC}"
+    echo -e "${YELLOW}    現在の値: '$SUPABASE_KEY'${NC}"
+    exit 1
+fi
+
+if [ -z "$SUPABASE_URL" ]; then
+    echo -e "${RED}❌ SUPABASE_URLが設定されていません${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✅ 環境変数の確認完了${NC}"
 
 echo -e "${YELLOW}📝 設定を確認中...${NC}"
 echo "  EC2ホスト: $EC2_HOST"
