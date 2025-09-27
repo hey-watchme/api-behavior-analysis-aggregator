@@ -46,6 +46,7 @@ class AnalysisRequest(BaseModel):
     """分析リクエストモデル"""
     device_id: str
     date: str  # YYYY-MM-DD形式
+    translate: Optional[bool] = True  # 日本語翻訳を適用するか（デフォルト: True）
 
 
 class TaskStatus(BaseModel):
@@ -100,7 +101,7 @@ async def start_sed_analysis(request: AnalysisRequest, background_tasks: Backgro
     }
     
     # バックグラウンドタスク追加
-    background_tasks.add_task(execute_sed_analysis, task_id, request.device_id, request.date)
+    background_tasks.add_task(execute_sed_analysis, task_id, request.device_id, request.date, request.translate)
     
     logger.info(f"SED分析開始: task_id={task_id}, device_id={request.device_id}, date={request.date}")
     
@@ -149,12 +150,18 @@ async def delete_analysis_task(task_id: str):
     return {"message": f"タスク {task_id} を削除しました"}
 
 
-async def execute_sed_analysis(task_id: str, device_id: str, date: str):
+async def execute_sed_analysis(task_id: str, device_id: str, date: str, translate: bool = True):
     """
     SED分析の実行（バックグラウンドタスク）
+    
+    Args:
+        task_id: タスクID
+        device_id: デバイスID
+        date: 対象日付（YYYY-MM-DD形式）
+        translate: 日本語翻訳を適用するか
     """
     try:
-        logger.info(f"🚀 バックグラウンドタスク開始: task_id={task_id}, device_id={device_id}, date={date}")
+        logger.info(f"🚀 バックグラウンドタスク開始: task_id={task_id}, device_id={device_id}, date={date}, translate={translate}")
         
         # ステップ1: データ収集・集計
         task_status[task_id].update({
@@ -166,7 +173,7 @@ async def execute_sed_analysis(task_id: str, device_id: str, date: str):
         logger.info(f"📊 SEDAggregator インスタンス作成中...")
         aggregator = SEDAggregator()
         logger.info(f"📡 Supabaseからデータ取得開始...")
-        result = await aggregator.run(device_id, date)
+        result = await aggregator.run(device_id, date, translate=translate)
         logger.info(f"📄 データ取得結果: {result}")
         
         if not result["success"]:

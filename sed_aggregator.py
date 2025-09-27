@@ -60,91 +60,94 @@ PRIORITY_CATEGORIES = {
     ]
 }
 
-# 音の統合マッピング（類似音を統一）
+# 音の統合マッピング（類似音を統一、英語のまま）
 SOUND_CONSOLIDATION = {
-    # 水関連を「水の音」に統合
-    'Water tap, faucet': '水の音',
-    'Sink (filling or washing)': '水の音',
-    'Water': '水の音',
-    'Pour': '水の音',
-    'Drip': '水の音',
+    # 水関連を統合
+    'Water tap, faucet': 'Water sounds',
+    'Sink (filling or washing)': 'Water sounds',
+    'Water': 'Water sounds',
+    'Pour': 'Water sounds',
+    'Drip': 'Water sounds',
+    'Liquid': 'Water sounds',
+    'Splash, splatter': 'Water sounds',
     
-    # タイピング・キーボード関連を「タイピング」に統合
-    'Computer keyboard': 'タイピング',
-    'Typing (computer)': 'タイピング',
-    'Typing on a computer keyboard': 'タイピング',
-    'Typing': 'タイピング',
+    # タイピング・キーボード関連を統合
+    'Computer keyboard': 'Typing',
+    'Typing (computer)': 'Typing',
+    'Typing on a computer keyboard': 'Typing',
+    'Typewriter': 'Typing',
     
-    # 動物関連を「動物」に統合
-    'Domestic animals, pets': '動物',
-    'Livestock, farm animals, working animals': '動物',
-    'Animal': '動物',
-    'Pet': '動物',
-    'Animal sounds': '動物',
+    # 動物関連を統合
+    'Domestic animals, pets': 'Animal',
+    'Livestock, farm animals, working animals': 'Animal',
+    'Pet': 'Animal',
+    'Animal sounds': 'Animal',
     
-    # 歩行関連を「足音」に統合
-    'Walk, footsteps': '足音',
-    'Footsteps': '足音',
-    'Running': '足音',
-    'Walking': '足音',
+    # 歩行関連を統合
+    'Walk, footsteps': 'Footsteps',
+    'Running': 'Footsteps',
+    'Walking': 'Footsteps',
+    'Shuffle': 'Footsteps',
     
-    # ドア関連を「ドア」に統合
-    'Doorbell': 'ドア',
-    'Door knocker': 'ドア',
-    'Door lock, sign in, sign off': 'ドア',
-    'Door': 'ドア',
+    # ドア関連を統合
+    'Doorbell': 'Door',
+    'Door knocker': 'Door',
+    'Door lock, sign in, sign off': 'Door',
     
-    # 呼吸関連を「呼吸音」に統合
-    'Respiratory sounds': '呼吸音',
-    'Breathing': '呼吸音',
+    # 呼吸関連を統合
+    'Respiratory sounds': 'Breathing',
+    'Gasp': 'Breathing',
+    'Pant': 'Breathing',
+    'Wheeze': 'Breathing',
     
-    # 咳関連を「咳」に統合
-    'Cough': '咳',
-    'Throat clearing': '咳',
+    # 咳関連を統合
+    'Throat clearing': 'Cough',
     
-    # 鳥関連を「鳥」に統合
-    'Bird': '鳥',
-    'Bird vocalization, bird call, bird song': '鳥',
-    'Bird, bird song': '鳥',
-    'Chirp, tweet': '鳥',
+    # 鳥関連を統合
+    'Bird vocalization, bird call, bird song': 'Bird',
+    'Bird, bird song': 'Bird',
+    'Chirp, tweet': 'Bird',
+    'Crow': 'Bird',
+    'Pigeon, dove': 'Bird',
     
-    # 食器・調理器具関連を統合
-    'Dishes, pots, and pans': '食器の音',
-    'Cutlery, silverware': '食器の音',
-    'Clinking': '食器の音',
+    # 食器関連を統合
+    'Dishes, pots, and pans': 'Dishes',
+    'Cutlery, silverware': 'Dishes',
+    'Clinking': 'Dishes',
+    'Chink, clink': 'Dishes',
     
     # テレビ・音声メディアを統合
-    'Television': 'テレビ',
-    'Radio': 'テレビ',
+    'Radio': 'Television',
+    'Video game music': 'Television',
     
     # 子供関連を統合
-    'Child speech, kid speaking': '子供の声',
-    'Children shouting': '子供の声',
-    'Children playing': '子供の声',
-    'Baby cry, infant cry': '赤ちゃんの泣き声',
-    'Baby laughter': '赤ちゃんの笑い声',
+    'Child speech, kid speaking': 'Child speech',
+    'Children shouting': 'Child speech',
+    'Children playing': 'Child speech',
+    'Baby cry, infant cry': 'Baby cry',
+    'Baby laughter': 'Baby laughter',
     
     # 音楽関連を統合
-    'Music': '音楽',
-    'Musical instrument': '音楽',
-    'Singing': '歌声',
-    'Song': '歌声',
+    'Musical instrument': 'Music',
+    'Song': 'Singing',
+    'Humming': 'Singing',
     
     # 会話・話し声を統合
-    'Speech': '話し声',
-    'Conversation': '話し声',
-    'Speech, human voice': '話し声',
-    'Narration, monologue': '話し声',
+    'Conversation': 'Speech',
+    'Speech, human voice': 'Speech',
+    'Narration, monologue': 'Speech',
+    'Male speech, man speaking': 'Speech',
+    'Female speech, woman speaking': 'Speech',
     
     # 笑い声を統合
-    'Laughter': '笑い声',
-    'Chuckle, chortle': '笑い声',
-    'Giggle': '笑い声',
+    'Chuckle, chortle': 'Laughter',
+    'Giggle': 'Laughter',
+    'Belly laugh': 'Laughter',
+    'Snicker': 'Laughter',
     
     # 引き出し・戸棚関連を統合
-    'Drawer open or close': '戸棚・引き出し',
-    'Cupboard open or close': '戸棚・引き出し',
-    'Filing (rasp)': '戸棚・引き出し',
+    'Drawer open or close': 'Cupboard open or close',
+    'Filing (rasp)': 'Cupboard open or close',
 }
 
 # AudioSetラベルの日本語訳対応表（AST/YAMNet共通）
@@ -681,13 +684,13 @@ class SEDAggregator:
         self.time_slots = self._generate_time_slots()
         print(f"✅ Supabase接続設定完了")
 
+    def _consolidate_event(self, event_name: str) -> str:
+        """類似イベントを統合する（英語のまま）"""
+        return SOUND_CONSOLIDATION.get(event_name, event_name)
+    
     def _translate_event_name(self, event_name: str) -> str:
-        """イベント名を日本語に翻訳する（音の統合も適用）"""
-        # まず統合マッピングをチェック
-        if event_name in SOUND_CONSOLIDATION:
-            return SOUND_CONSOLIDATION[event_name]
-        # 次に通常の翻訳マッピングをチェック
-        return AUDIOSET_LABEL_MAP.get(event_name, event_name) # マップにない場合は元の名前を返す
+        """イベント名を日本語に翻訳する（最終段階でのみ使用）"""
+        return AUDIOSET_LABEL_MAP.get(event_name, event_name)
     
     def _generate_time_slots(self) -> List[str]:
         """30分スロットのリストを生成（00-00 から 23-30 まで）"""
@@ -726,7 +729,7 @@ class SEDAggregator:
     def _extract_events_from_supabase(self, events_data: List[Dict]) -> List[str]:
         """Supabaseのeventsカラムから音響イベントラベルを抽出（新形式対応）
         
-        除外リスト（EXCLUDED_EVENTS）に含まれるイベントは自動的にフィルタリングされます。
+        注：除外処理はランキング作成時に行う
         """
         events = []
         
@@ -739,9 +742,9 @@ class SEDAggregator:
                 for event in events_data:
                     if isinstance(event, dict) and 'label' in event:
                         label = event['label']
-                        # 除外リストに含まれていないイベントのみ追加
-                        if label not in EXCLUDED_EVENTS:
-                            events.append(label)
+                        # 統合処理を適用
+                        consolidated_label = self._consolidate_event(label)
+                        events.append(consolidated_label)
             # 新形式チェック: {"time": 0.0, "events": [...]}
             elif 'time' in first_item and 'events' in first_item:
                 # 新形式の処理
@@ -750,73 +753,125 @@ class SEDAggregator:
                         for event in time_block['events']:
                             if isinstance(event, dict) and 'label' in event:
                                 label = event['label']
-                                # 除外リストに含まれていないイベントのみ追加
-                                if label not in EXCLUDED_EVENTS:
-                                    events.append(label)
+                                # 統合処理を適用
+                                consolidated_label = self._consolidate_event(label)
+                                events.append(consolidated_label)
         
         return events
     
-    def _create_summary_ranking(self, all_events: List[str]) -> List[Dict[str, int]]:
-        """優先順位に基づいて生活音リストを作成（最大10件）"""
+    def _create_summary_ranking(self, all_events: List[str], translate: bool = True) -> List[Dict[str, Any]]:
+        """優先順位に基づいて生活音リストを作成
+        
+        Args:
+            all_events: 全イベントリスト（既に統合済み）
+            translate: 日本語翻訳を適用するか
+        
+        Returns:
+            優先イベント＋通常ランキングの全データ
+        """
+        # イベントをカウント
         counter = Counter(all_events)
         result = []
         used_events = set()
         
-        # 優先度1: 生体反応（全て含める）
+        # ステップ1: 優先イベントを抽出（1回でも検出されたら追加）
+        priority_events = []
+        
+        # 生体反応カテゴリ（最優先）
         for event in PRIORITY_CATEGORIES['biometric']:
-            if event in counter and event not in used_events:
-                translated_event = self._translate_event_name(event)
-                result.append({"event": translated_event, "count": counter[event]})
+            # 統合後のラベルもチェック
+            consolidated_event = self._consolidate_event(event)
+            if consolidated_event in counter and consolidated_event not in used_events:
+                priority_events.append({
+                    "event": consolidated_event,
+                    "count": counter[consolidated_event],
+                    "category": "biometric",
+                    "priority": True
+                })
+                used_events.add(consolidated_event)
+            elif event in counter and event not in used_events:
+                priority_events.append({
+                    "event": event,
+                    "count": counter[event],
+                    "category": "biometric",
+                    "priority": True
+                })
                 used_events.add(event)
         
-        # 優先度2: 声・会話（残り枠に入れる）
-        if len(result) < 10:
-            voice_events = []
-            for event in PRIORITY_CATEGORIES['voice']:
-                if event in counter and event not in used_events:
-                    voice_events.append((event, counter[event]))
-            # 声関連は出現回数順でソート
-            voice_events.sort(key=lambda x: x[1], reverse=True)
-            for event, count in voice_events:
-                if len(result) >= 10:
-                    break
-                translated_event = self._translate_event_name(event)
-                result.append({"event": translated_event, "count": count})
+        # 声・会話カテゴリ（優先度2）
+        for event in PRIORITY_CATEGORIES['voice']:
+            consolidated_event = self._consolidate_event(event)
+            if consolidated_event in counter and consolidated_event not in used_events:
+                priority_events.append({
+                    "event": consolidated_event,
+                    "count": counter[consolidated_event],
+                    "category": "voice",
+                    "priority": True
+                })
+                used_events.add(consolidated_event)
+            elif event in counter and event not in used_events:
+                priority_events.append({
+                    "event": event,
+                    "count": counter[event],
+                    "category": "voice",
+                    "priority": True
+                })
                 used_events.add(event)
         
-        # 優先度3: 生活音（残り枠に入れる）
-        if len(result) < 10:
-            daily_events = []
-            for event in PRIORITY_CATEGORIES['daily_life']:
-                if event in counter and event not in used_events:
-                    daily_events.append((event, counter[event]))
-            # 生活音も出現回数順でソート
-            daily_events.sort(key=lambda x: x[1], reverse=True)
-            for event, count in daily_events:
-                if len(result) >= 10:
-                    break
-                translated_event = self._translate_event_name(event)
-                result.append({"event": translated_event, "count": count})
+        # 生活音カテゴリ（優先度3）
+        for event in PRIORITY_CATEGORIES['daily_life']:
+            consolidated_event = self._consolidate_event(event)
+            if consolidated_event in counter and consolidated_event not in used_events:
+                priority_events.append({
+                    "event": consolidated_event,
+                    "count": counter[consolidated_event],
+                    "category": "daily_life",
+                    "priority": True
+                })
+                used_events.add(consolidated_event)
+            elif event in counter and event not in used_events:
+                priority_events.append({
+                    "event": event,
+                    "count": counter[event],
+                    "category": "daily_life",
+                    "priority": True
+                })
                 used_events.add(event)
         
-        # 優先度4: その他（残り枠に入れる）
-        if len(result) < 10:
-            other_events = []
-            for event, count in counter.items():
-                if event not in used_events:
-                    other_events.append((event, count))
-            # その他も出現回数順でソート
-            other_events.sort(key=lambda x: x[1], reverse=True)
-            for event, count in other_events:
-                if len(result) >= 10:
-                    break
-                translated_event = self._translate_event_name(event)
-                result.append({"event": translated_event, "count": count})
-                used_events.add(event)
+        # ステップ2: 除外リストのフィルタリング（優先イベント以外）
+        filtered_counter = {}
+        for event, count in counter.items():
+            if event not in used_events and event not in EXCLUDED_EVENTS:
+                # 統合前のオリジナルラベルも除外リストでチェック
+                original_excluded = False
+                for original, consolidated in SOUND_CONSOLIDATION.items():
+                    if consolidated == event and original in EXCLUDED_EVENTS:
+                        original_excluded = True
+                        break
+                if not original_excluded:
+                    filtered_counter[event] = count
+        
+        # ステップ3: 通常のランキング（出現回数順）
+        regular_ranking = sorted(filtered_counter.items(), key=lambda x: x[1], reverse=True)
+        
+        # 結果を結合（優先イベント→通常ランキング）
+        result = priority_events
+        for event, count in regular_ranking:
+            result.append({
+                "event": event,
+                "count": count,
+                "category": "other",
+                "priority": False
+            })
+        
+        # ステップ4: 翻訳を適用（必要な場合）
+        if translate:
+            for item in result:
+                item["event"] = self._translate_event_name(item["event"])
         
         return result
     
-    def _create_time_blocks(self, slot_data: Dict[str, List[Dict]]) -> Dict[str, Optional[List[Dict[str, Any]]]]:
+    def _create_time_blocks(self, slot_data: Dict[str, List[Dict]], translate: bool = True) -> Dict[str, Optional[List[Dict[str, Any]]]]:
         """スロット別のイベント集計を構造化形式で作成"""
         time_blocks = {}
         
@@ -828,8 +883,10 @@ class SEDAggregator:
                     # イベントを構造化形式で表現
                     event_list = []
                     for event, count in counter.most_common():
-                        translated_event = self._translate_event_name(event)
-                        event_list.append({"event": translated_event, "count": count})
+                        # 除外リストをチェック
+                        if event not in EXCLUDED_EVENTS:
+                            event_name = self._translate_event_name(event) if translate else event
+                            event_list.append({"event": event_name, "count": count})
                     time_blocks[slot] = event_list
                 else:
                     # データは存在するがイベントが空の場合
@@ -840,21 +897,26 @@ class SEDAggregator:
         
         return time_blocks
     
-    def aggregate_data(self, slot_data: Dict[str, List[Dict]]) -> Dict:
-        """収集したデータを集計して結果形式を生成"""
+    def aggregate_data(self, slot_data: Dict[str, List[Dict]], translate: bool = True) -> Dict:
+        """収集したデータを集計して結果形式を生成
+        
+        Args:
+            slot_data: スロット別のイベントデータ
+            translate: 日本語翻訳を適用するか
+        """
         print("📊 データ集計開始...")
         
-        # 全イベントを収集
+        # 全イベントを収集（統合処理適用済み）
         all_events = []
         for events_data in slot_data.values():
             events = self._extract_events_from_supabase(events_data)
             all_events.extend(events)
         
-        # summary_ranking作成
-        summary_ranking = self._create_summary_ranking(all_events)
+        # summary_ranking作成（全データを含む）
+        summary_ranking = self._create_summary_ranking(all_events, translate=translate)
         
         # time_blocks作成
-        time_blocks = self._create_time_blocks(slot_data)
+        time_blocks = self._create_time_blocks(slot_data, translate=translate)
         
         result = {
             "summary_ranking": summary_ranking,
@@ -862,6 +924,8 @@ class SEDAggregator:
         }
         
         print(f"✅ 集計完了: 総イベント数 {len(all_events)}")
+        print(f"   優先イベント数: {len([e for e in summary_ranking if e.get('priority', False)])}")
+        print(f"   全ランキング数: {len(summary_ranking)}")
         return result
     
     async def save_to_supabase(self, result: Dict, device_id: str, date: str) -> bool:
@@ -883,9 +947,16 @@ class SEDAggregator:
             print(f"❌ Supabase保存エラー: {e}")
             return False
     
-    async def run(self, device_id: str, date: str) -> dict:
-        """メイン処理実行"""
+    async def run(self, device_id: str, date: str, translate: bool = True) -> dict:
+        """メイン処理実行
+        
+        Args:
+            device_id: デバイスID
+            date: 対象日付（YYYY-MM-DD形式）
+            translate: 日本語翻訳を適用するか（デフォルト: True）
+        """
         print(f"🚀 SED集計処理開始: {device_id}, {date}")
+        print(f"   翻訳モード: {'有効' if translate else '無効'}")
         
         # Supabaseからデータ取得
         slot_data = await self.fetch_all_data(device_id, date)
@@ -894,15 +965,15 @@ class SEDAggregator:
             print(f"⚠️ {date}のデータがありません")
             return {"success": False, "reason": "no_data", "message": f"{date}のデータがありません"}
         
-        # データ集計
-        result = self.aggregate_data(slot_data)
+        # データ集計（翻訳フラグを渡す）
+        result = self.aggregate_data(slot_data, translate=translate)
         
         # Supabaseに保存
         success = await self.save_to_supabase(result, device_id, date)
         
         if success:
             print("🎉 SED集計処理完了")
-            return {"success": True, "message": "処理完了"}
+            return {"success": True, "message": "処理完了", "result": result}
         else:
             return {"success": False, "reason": "save_error", "message": "データの保存に失敗しました"}
 
