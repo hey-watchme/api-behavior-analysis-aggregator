@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    # ステップ1: コードのチェックアウト
+    # ステップ1: コードのチェックアウト（重要：最新コードでビルドするため）
     - name: Checkout code
       uses: actions/checkout@v4
 
@@ -42,7 +42,16 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    # ステップ5: Dockerイメージのビルド、タグ付け、プッシュ（ARM64対応）
+    # ステップ5: 古いイメージをECRから削除（オプション、推奨）
+    - name: Delete old images from ECR (optional but recommended)
+      run: |
+        # 古いlatestタグを削除（エラーは無視）
+        aws ecr batch-delete-image \
+          --region ${{ env.AWS_REGION }} \
+          --repository-name ${{ env.ECR_REPOSITORY }} \
+          --image-ids imageTag=latest || true
+
+    # ステップ6: Dockerイメージのビルド、タグ付け、プッシュ（ARM64対応）
     - name: Build, tag, and push image to Amazon ECR
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -157,9 +166,8 @@ jobs:
           # 古いコンテナを停止
           docker-compose -f docker-compose.prod.yml down || true
           
-          # 古いイメージを完全削除（重要！）
-          docker rmi 754724220380.dkr.ecr.ap-southeast-2.amazonaws.com/watchme-api-sed-aggregator:latest || true
-          docker rmi 754724220380.dkr.ecr.ap-southeast-2.amazonaws.com/watchme-api-behavior-aggregator:latest || true
+          # すべての未使用イメージを完全削除（標準仕様書推奨）
+          docker system prune -a -f
           
           echo "🔄 Running deployment script..."
           ./run-prod.sh
