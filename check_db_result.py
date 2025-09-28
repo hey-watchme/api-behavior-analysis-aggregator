@@ -21,7 +21,7 @@ def check_database_result():
     
     # データ取得
     device_id = "d067d407-cf73-4174-a9c1-d91fb60d64d0"
-    date = "2025-09-27"
+    date = "2025-09-28"
     
     print("=" * 60)
     print("データベース保存結果確認")

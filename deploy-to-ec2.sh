@@ -71,7 +71,7 @@ ssh -i $EC2_KEY $EC2_USER@$EC2_HOST << EOF
     cd $REMOTE_PATH
     
     echo "📦 最新のイメージをプル..."
-    docker pull 754724220380.dkr.ecr.ap-southeast-2.amazonaws.com/watchme-api-behavior-aggregator:latest
+    docker pull 754724220380.dkr.ecr.ap-southeast-2.amazonaws.com/watchme-api-sed-aggregator:latest
     
     echo "🛑 既存のコンテナを停止..."
     docker-compose -f docker-compose.prod.yml down || true
