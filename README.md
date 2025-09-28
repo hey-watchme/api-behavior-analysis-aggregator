@@ -192,7 +192,10 @@ APIの稼働状況を確認
 
 ### 1. 環境変数の設定
 
-`.env`ファイルを作成：
+> **重要**: 本番環境ではGitHub Actionsが自動的に`.env`ファイルを作成します。
+> 詳細は[CI/CD標準仕様書](../../server-configs/CICD_STANDARD_SPECIFICATION.md)を参照してください。
+
+ローカル開発用の`.env`ファイル作成：
 
 ```env
 SUPABASE_URL=https://your-project.supabase.co
@@ -249,6 +252,8 @@ curl -X POST http://localhost:8010/analysis/sed \
 
 ### 自動デプロイ（CI/CD）
 
+> **📘 詳細**: [CI/CD標準仕様書](../../server-configs/CICD_STANDARD_SPECIFICATION.md)を参照
+
 mainブランチへのプッシュで自動的にデプロイ：
 
 ```bash
@@ -257,14 +262,35 @@ git commit -m "feat: 新機能の追加"
 git push origin main
 ```
 
-### 手動デプロイ
+**CI/CDプロセス**:
+1. GitHub ActionsがECRにDockerイメージをプッシュ
+2. GitHub Secretsから環境変数を取得してEC2に`.env`ファイルを作成
+3. Docker Composeでコンテナを再起動
+
+### 必要なGitHub Secrets設定
+
+```
+AWS_ACCESS_KEY_ID       # AWS認証
+AWS_SECRET_ACCESS_KEY   # AWS認証  
+EC2_HOST                # デプロイ先EC2
+EC2_SSH_PRIVATE_KEY     # SSH接続用
+EC2_USER                # SSHユーザー
+SUPABASE_URL            # Supabase URL（重要）
+SUPABASE_KEY            # Supabase APIキー（重要）
+```
+
+### 手動デプロイ（非推奨）
+
+CI/CDを使用せずに手動でデプロイする場合のみ：
 
 ```bash
 # ECRへのイメージプッシュ
 ./deploy-ecr.sh
 
-# EC2への設定ファイル転送とデプロイ
-./deploy-to-ec2.sh
+# EC2で実行
+ssh -i ~/watchme-key.pem ubuntu@3.24.16.82
+cd /home/ubuntu/api-sed-aggregator
+./run-prod.sh
 ```
 
 ## 📋 トラブルシューティング
@@ -295,16 +321,28 @@ python test_aggregator.py  # 詳細なログを確認
 }
 ```
 
-#### 3. Supabase接続エラー
+#### 3. Supabase接続エラー（Invalid API key）
 
 **原因**: 環境変数が正しく設定されていない
 
 **解決方法**:
-```bash
-# 環境変数を確認
-cat .env
-# SUPABASE_URL と SUPABASE_KEY が正しいか確認
-```
+
+1. GitHub Secretsを確認:
+   - `SUPABASE_URL`と`SUPABASE_KEY`が設定されているか確認
+
+2. EC2で環境変数を確認:
+   ```bash
+   cd /home/ubuntu/api-sed-aggregator
+   cat .env
+   # SUPABASE_URL と SUPABASE_KEY が正しいか確認
+   ```
+
+3. コンテナ内の環境変数を確認:
+   ```bash
+   docker exec api-sed-aggregator env | grep SUPABASE
+   ```
+
+詳細は[CI/CD標準仕様書](../../server-configs/CICD_STANDARD_SPECIFICATION.md)を参照
 
 ## 📈 パフォーマンス最適化
 

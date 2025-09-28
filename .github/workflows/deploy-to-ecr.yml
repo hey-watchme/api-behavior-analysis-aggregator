@@ -101,7 +101,38 @@ jobs:
         mkdir -p ~/.ssh
         ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
     
-    # ステップ3: EC2にデプロイ
+    # ステップ3: 環境変数ファイルの作成/更新
+    - name: Create/Update .env file on EC2
+      env:
+        EC2_HOST: ${{ secrets.EC2_HOST }}
+        EC2_USER: ${{ secrets.EC2_USER }}
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      run: |
+        echo "📝 Creating/Updating .env file on EC2..."
+        
+        ssh ${EC2_USER}@${EC2_HOST} << ENDSSH
+          set -e
+          echo "📦 Navigating to application directory..."
+          cd /home/ubuntu/api-sed-aggregator
+          
+          echo "🔧 Creating .env file with latest credentials..."
+          cat > .env << 'EOF'
+        SUPABASE_URL=${SUPABASE_URL}
+        SUPABASE_KEY=${SUPABASE_KEY}
+        EOF
+          
+          echo "✅ .env file created/updated successfully"
+          
+          # .envファイルの存在確認（デバッグ用）
+          if [ -f .env ]; then
+            echo "📋 .env file exists with $(wc -l < .env) lines"
+          else
+            echo "⚠️ Warning: .env file was not created"
+          fi
+        ENDSSH
+    
+    # ステップ4: EC2にデプロイ
     - name: Deploy to EC2 instance
       env:
         EC2_HOST: ${{ secrets.EC2_HOST }}
@@ -132,7 +163,7 @@ jobs:
         
         echo "✅ EC2 deployment completed successfully!"
     
-    # ステップ4: デプロイ成功通知
+    # ステップ5: デプロイ成功通知
     - name: Deployment Success Notification
       if: success()
       run: |
@@ -141,7 +172,7 @@ jobs:
         echo "🌐 URL: https://api.hey-watch.me/behavior-aggregator/"
         echo "🏷️ Version: ${{ github.sha }}"
     
-    # ステップ5: デプロイ失敗通知
+    # ステップ6: デプロイ失敗通知
     - name: Deployment Failure Notification
       if: failure()
       run: |

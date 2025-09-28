@@ -19,32 +19,26 @@ aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS 
 echo "📦 Pulling latest image from ECR..."
 docker pull ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
 
-# 既存のコンテナを停止・削除（存在する場合）
+# 既存のコンテナを停止（Docker Composeを使用）
 echo "🛑 Stopping existing container (if any)..."
-docker stop ${CONTAINER_NAME} 2>/dev/null || true
-docker rm ${CONTAINER_NAME} 2>/dev/null || true
+docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
 
-# 環境変数ファイルの確認
-if [ ! -f /home/ubuntu/.env ]; then
-    echo "⚠️ Warning: .env file not found at /home/ubuntu/.env"
-    echo "Creating .env file from example..."
-    # 必要に応じて.envファイルを作成
-    cat > /home/ubuntu/.env << EOF
-# Supabase設定
-SUPABASE_URL=https://qvtlwotzuzbavrzqhyvt.supabase.co
-SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2dGx3b3R6dXpiYXZyenFoeXZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzODAzMzAsImV4cCI6MjA2Njk1NjMzMH0.g5rqrbxHPw1dKlaGqJ8miIl9gCXyamPajinGCauEI3k
-EOF
-    echo "✅ .env file created with production Supabase credentials"
+# 環境変数ファイルの確認（カレントディレクトリ）
+if [ ! -f .env ]; then
+    echo "⚠️ Warning: .env file not found in current directory"
+    echo "ℹ️  Note: .env file should be created by GitHub Actions or manually"
+    echo "   If running manually, create .env with:"
+    echo "   SUPABASE_URL=<your-url>"
+    echo "   SUPABASE_KEY=<your-key>"
+    exit 1
+else
+    echo "✅ .env file found in current directory"
+    echo "📋 .env file contains $(wc -l < .env) lines"
 fi
 
-# 新しいコンテナを起動
-echo "🚀 Starting new container..."
-docker run -d \
-  --name ${CONTAINER_NAME} \
-  --restart unless-stopped \
-  -p 8010:8010 \
-  --env-file /home/ubuntu/.env \
-  ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
+# 新しいコンテナを起動（Docker Composeを使用）
+echo "🚀 Starting new container with docker-compose..."
+docker-compose -f docker-compose.prod.yml up -d
 
 # コンテナが正常に起動したか確認
 echo "⏳ Waiting for container to start..."
