@@ -117,7 +117,7 @@ jobs:
           cd /home/ubuntu/api-sed-aggregator
           
           echo "🔧 Creating .env file with latest credentials..."
-          cat > .env << 'EOF'
+          cat > .env << EOF
         SUPABASE_URL=${SUPABASE_URL}
         SUPABASE_KEY=${SUPABASE_KEY}
         EOF
