@@ -134,7 +134,7 @@ jobs:
           cd /home/ubuntu/api-sed-aggregator
           echo "SUPABASE_URL=${SUPABASE_URL}" > .env
           echo "SUPABASE_KEY=${SUPABASE_KEY}" >> .env
-ENDSSH
+        ENDSSH
         
         # 作成確認
         ssh ${EC2_USER}@${EC2_HOST} "echo '✅ .env file created/updated successfully' && wc -l /home/ubuntu/api-sed-aggregator/.env"
