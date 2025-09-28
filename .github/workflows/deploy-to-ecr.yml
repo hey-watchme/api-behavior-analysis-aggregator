@@ -111,25 +111,25 @@ jobs:
       run: |
         echo "📝 Creating/Updating .env file on EC2..."
         
+        # SSH接続して.envファイルを作成
+        # 重要: 環境変数は事前に展開してからSSHに渡す
         ssh ${EC2_USER}@${EC2_HOST} << ENDSSH
           set -e
           echo "📦 Navigating to application directory..."
           cd /home/ubuntu/api-sed-aggregator
           
           echo "🔧 Creating .env file with latest credentials..."
-          cat > .env << EOF
-        SUPABASE_URL=${SUPABASE_URL}
-        SUPABASE_KEY=${SUPABASE_KEY}
-        EOF
+          # echoコマンドで直接書き込み（環境変数の確実な展開）
+          echo "SUPABASE_URL=${SUPABASE_URL}" > .env
+          echo "SUPABASE_KEY=${SUPABASE_KEY}" >> .env
           
           echo "✅ .env file created/updated successfully"
           
-          # .envファイルの存在確認（デバッグ用）
-          if [ -f .env ]; then
-            echo "📋 .env file exists with $(wc -l < .env) lines"
-          else
-            echo "⚠️ Warning: .env file was not created"
-          fi
+          # .envファイルの内容確認（デバッグ用）
+          echo "📋 .env file content (first 50 chars of each line):"
+          while IFS= read -r line; do
+            echo "  - \${line:0:50}..."
+          done < .env
         ENDSSH
     
     # ステップ4: EC2にデプロイ
