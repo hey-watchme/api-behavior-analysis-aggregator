@@ -152,6 +152,14 @@ EOF"
           echo "📦 Navigating to application directory..."
           cd /home/ubuntu/api-sed-aggregator
           
+          echo "🗑️ Cleaning up old Docker images..."
+          # 古いコンテナを停止
+          docker-compose -f docker-compose.prod.yml down || true
+          
+          # 古いイメージを完全削除（重要！）
+          docker rmi 754724220380.dkr.ecr.ap-southeast-2.amazonaws.com/watchme-api-sed-aggregator:latest || true
+          docker rmi 754724220380.dkr.ecr.ap-southeast-2.amazonaws.com/watchme-api-behavior-aggregator:latest || true
+          
           echo "🔄 Running deployment script..."
           ./run-prod.sh
           
