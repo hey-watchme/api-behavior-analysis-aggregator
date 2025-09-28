@@ -129,11 +129,12 @@ jobs:
         echo "📝 Creating/Updating .env file on EC2..."
         
         # SSH接続して.envファイルを作成
-        # 重要: catコマンドとヒアドキュメントで確実に環境変数を渡す
-        ssh ${EC2_USER}@${EC2_HOST} "cd /home/ubuntu/api-sed-aggregator && cat > .env << 'EOF'
-SUPABASE_URL=${SUPABASE_URL}
-SUPABASE_KEY=${SUPABASE_KEY}
-EOF"
+        # 重要: echoコマンドで確実に環境変数を渡す（推奨方法）
+        ssh ${EC2_USER}@${EC2_HOST} << ENDSSH
+          cd /home/ubuntu/api-sed-aggregator
+          echo "SUPABASE_URL=${SUPABASE_URL}" > .env
+          echo "SUPABASE_KEY=${SUPABASE_KEY}" >> .env
+ENDSSH
         
         # 作成確認
         ssh ${EC2_USER}@${EC2_HOST} "echo '✅ .env file created/updated successfully' && wc -l /home/ubuntu/api-sed-aggregator/.env"
