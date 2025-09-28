@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   api:
-    image: 754724220380.dkr.ecr.ap-southeast-2.amazonaws.com/watchme-api-behavior-aggregator:latest
+    image: 754724220380.dkr.ecr.ap-southeast-2.amazonaws.com/watchme-api-sed-aggregator:latest
     container_name: api-sed-aggregator
     env_file:
       - .env
