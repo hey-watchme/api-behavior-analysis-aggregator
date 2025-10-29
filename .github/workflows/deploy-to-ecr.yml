@@ -12,7 +12,7 @@ on:
 # 環境変数
 env:
   AWS_REGION: ap-southeast-2
-  ECR_REPOSITORY: watchme-api-behavior-analysis-aggregator
+  ECR_REPOSITORY: watchme-api-sed-aggregator
 
 # ジョブの定義
 jobs:
@@ -82,7 +82,7 @@ jobs:
         echo ""
         echo "📋 Next Steps:"
         echo "1. SSH to EC2: ssh -i ~/watchme-key.pem ubuntu@3.24.16.82"
-        echo "2. Deploy: cd /home/ubuntu/api-behavior-analysis-aggregator && ./run-prod.sh"
+        echo "2. Deploy: cd /home/ubuntu/api-sed-aggregator && ./run-prod.sh"
 
     # ステップ7: エラー時の通知
     - name: Deploy Failure Notification
@@ -122,9 +122,9 @@ jobs:
         EC2_USER: ${{ secrets.EC2_USER }}
       run: |
         echo "📦 Updating configuration files on EC2..."
-        scp -o StrictHostKeyChecking=no docker-compose.prod.yml ${EC2_USER}@${EC2_HOST}:/home/ubuntu/api-behavior-analysis-aggregator/
-        scp -o StrictHostKeyChecking=no run-prod.sh ${EC2_USER}@${EC2_HOST}:/home/ubuntu/api-behavior-analysis-aggregator/
-        ssh ${EC2_USER}@${EC2_HOST} "chmod +x /home/ubuntu/api-behavior-analysis-aggregator/run-prod.sh"
+        scp -o StrictHostKeyChecking=no docker-compose.prod.yml ${EC2_USER}@${EC2_HOST}:/home/ubuntu/api-sed-aggregator/
+        scp -o StrictHostKeyChecking=no run-prod.sh ${EC2_USER}@${EC2_HOST}:/home/ubuntu/api-sed-aggregator/
+        ssh ${EC2_USER}@${EC2_HOST} "chmod +x /home/ubuntu/api-sed-aggregator/run-prod.sh"
         echo "✅ Configuration files updated"
     
     # ステップ5: 環境変数ファイルの作成/更新
@@ -140,13 +140,13 @@ jobs:
         # SSH接続して.envファイルを作成
         # 重要: echoコマンドで確実に環境変数を渡す（推奨方法）
         ssh ${EC2_USER}@${EC2_HOST} << ENDSSH
-          cd /home/ubuntu/api-behavior-analysis-aggregator
+          cd /home/ubuntu/api-sed-aggregator
           echo "SUPABASE_URL=${SUPABASE_URL}" > .env
           echo "SUPABASE_KEY=${SUPABASE_KEY}" >> .env
         ENDSSH
 
         # 作成確認
-        ssh ${EC2_USER}@${EC2_HOST} "echo '✅ .env file created/updated successfully' && wc -l /home/ubuntu/api-behavior-analysis-aggregator/.env"
+        ssh ${EC2_USER}@${EC2_HOST} "echo '✅ .env file created/updated successfully' && wc -l /home/ubuntu/api-sed-aggregator/.env"
     
     # ステップ6: EC2にデプロイ
     - name: Deploy to EC2 instance
@@ -160,7 +160,7 @@ jobs:
         ssh ${EC2_USER}@${EC2_HOST} << 'ENDSSH'
           set -e
           echo "📦 Navigating to application directory..."
-          cd /home/ubuntu/api-behavior-analysis-aggregator
+          cd /home/ubuntu/api-sed-aggregator
 
           echo "🗑️ Cleaning up old Docker images..."
           # 古いコンテナを停止
@@ -176,7 +176,7 @@ jobs:
 
           # コンテナの状態確認
           echo "📊 Checking container status..."
-          docker ps | grep api-behavior-analysis-aggregator || echo "⚠️ Container not found"
+          docker ps | grep api-sed-aggregator || echo "⚠️ Container not found"
 
           # ヘルスチェック
           echo "🏥 Running health check..."
@@ -191,7 +191,7 @@ jobs:
       if: success()
       run: |
         echo "🎉 Full CI/CD pipeline completed successfully!"
-        echo "📦 Service: api-behavior-analysis-aggregator"
+        echo "📦 Service: api-sed-aggregator"
         echo "🌐 URL: https://api.hey-watch.me/behavior-aggregator/"
         echo "🏷️ Version: ${{ github.sha }}"
     
