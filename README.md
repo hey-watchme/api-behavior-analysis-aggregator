@@ -31,9 +31,9 @@
 | └ ヘルスチェック | `/health` | Docker healthcheck |
 | | | |
 | **☁️ AWS ECR** | | |
-| └ リポジトリ名 | `watchme-api-sed-aggregator` | ※prefixが不統一 |
+| └ リポジトリ名 | `watchme-api-behavior-analysis-aggregator` | |
 | └ リージョン | ap-southeast-2 (Sydney) | |
-| └ URI | `754724220380.dkr.ecr.ap-southeast-2.amazonaws.com/watchme-api-sed-aggregator:latest` | |
+| └ URI | `754724220380.dkr.ecr.ap-southeast-2.amazonaws.com/watchme-api-behavior-analysis-aggregator:latest` | |
 | | | |
 | **⚙️ systemd** | | |
 | └ サービス名 | `api-sed-aggregator.service` | ※名前が不統一 |
@@ -42,8 +42,8 @@
 | | | |
 | **📂 ディレクトリ** | | |
 | └ ソースコード | `/Users/kaya.matsumoto/projects/watchme/api/behavior-analysis/aggregator` | ローカル |
-| └ GitHubリポジトリ | `hey-watchme/api-sed-aggregator` | ※名前が不統一 |
-| └ EC2配置場所 | `/home/ubuntu/api-sed-aggregator` | ※Docker経由が推奨 |
+| └ GitHubリポジトリ | `hey-watchme/api-behavior-analysis-aggregator` | |
+| └ EC2配置場所 | `/home/ubuntu/api-behavior-analysis-aggregator` | ※Docker経由が推奨 |
 | | | |
 | **🔗 呼び出し元** | | |
 | └ Lambda関数 | `watchme-audio-worker` | Behavior Features成功時に自動起動 |
