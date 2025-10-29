@@ -1,6 +1,60 @@
-# SED集計API - 音響イベント分析サービス
+# Behavior Aggregator API | SED集計API - 音響イベント分析サービス
 
 音響イベント検出（SED: Sound Event Detection）データを収集・分析し、優先順位に基づいて重要なイベントを抽出するFastAPIベースのREST APIサービスです。
+
+---
+
+## 🗺️ ルーティング詳細
+
+| 項目 | 値 | 説明 |
+|------|-----|------|
+| **🏷️ サービス名** | Behavior Aggregator API | 音響イベント集計・分析 |
+| **📊 役割** | SED集計 | Behavior Featuresの出力を集計 |
+| | | |
+| **🌐 外部アクセス（Nginx）** | | |
+| └ 公開エンドポイント | `https://api.hey-watch.me/behavior-aggregator/` | 外部からのアクセスパス |
+| └ Nginx設定ファイル | `/etc/nginx/sites-available/api.hey-watch.me` | 54-70行目 |
+| └ proxy_pass先 | `http://localhost:8010/` | 内部転送先 |
+| └ タイムアウト | デフォルト（60秒） | |
+| | | |
+| **🔌 API内部エンドポイント** | | |
+| └ 分析開始 | `/analysis/sed` | POST - 非同期処理開始 |
+| └ タスク確認 | `/analysis/sed/{task_id}` | GET - 進捗確認 |
+| └ タスク一覧 | `/analysis/sed` | GET - 全タスク取得 |
+| └ タスク削除 | `/analysis/sed/{task_id}` | DELETE |
+| └ ヘルスチェック | `/health` | GET |
+| | | |
+| **🐳 Docker/コンテナ** | | |
+| └ コンテナ名 | `api-sed-aggregator` | ※名前が不統一 |
+| └ ポート（内部） | 8010 | コンテナ内 |
+| └ ポート（公開） | `127.0.0.1:8010:8010` | ローカルホストのみ |
+| └ ヘルスチェック | `/health` | Docker healthcheck |
+| | | |
+| **☁️ AWS ECR** | | |
+| └ リポジトリ名 | `watchme-api-sed-aggregator` | ※prefixが不統一 |
+| └ リージョン | ap-southeast-2 (Sydney) | |
+| └ URI | `754724220380.dkr.ecr.ap-southeast-2.amazonaws.com/watchme-api-sed-aggregator:latest` | |
+| | | |
+| **⚙️ systemd** | | |
+| └ サービス名 | `api-sed-aggregator.service` | ※名前が不統一 |
+| └ 起動コマンド | `docker-compose up -d` | |
+| └ 自動起動 | enabled | サーバー再起動時に自動起動 |
+| | | |
+| **📂 ディレクトリ** | | |
+| └ ソースコード | `/Users/kaya.matsumoto/projects/watchme/api/behavior-analysis/aggregator` | ローカル |
+| └ GitHubリポジトリ | `hey-watchme/api-sed-aggregator` | ※名前が不統一 |
+| └ EC2配置場所 | `/home/ubuntu/api-sed-aggregator` | ※Docker経由が推奨 |
+| | | |
+| **🔗 呼び出し元** | | |
+| └ Lambda関数 | `watchme-audio-worker` | Behavior Features成功時に自動起動 |
+| └ 呼び出しURL | `https://api.hey-watch.me/behavior-aggregator/analysis/sed` | フルパス |
+| └ 環境変数 | `API_BASE_URL=https://api.hey-watch.me` | Lambda内 |
+| | | |
+| **📥 データソース** | | |
+| └ 入力テーブル | `behavior_yamnet` | Behavior Featuresの出力 |
+| └ 出力テーブル | `behavior_summary` | 集計結果 |
+
+---
 
 ## 🎯 主な特徴
 
