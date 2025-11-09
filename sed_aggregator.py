@@ -2,15 +2,16 @@
 """
 SED（Sound Event Detection）データ集計ツール
 
-Supabaseのbehavior_yamnetテーブルから音響イベント検出データを収集し、
-日次集計結果をbehavior_summaryテーブルに保存する。
+Supabaseのaudio_featuresテーブルから音響イベント検出データを収集し、
+日次集計結果をaudio_aggregatorテーブルに保存する。
 
 処理フロー:
-1. behavior_yamnetから生データ取得
+1. audio_features.behavior_extractor_resultから生データ取得
 2. フィルタリング（不要なイベント除外）
 3. 統合（類似イベントをまとめる）
 4. time_blocks作成（30分スロット別の集計）
-5. summary_ranking作成（time_blocksから1日全体を集計）
+5. summary_ranking作成（time_blocksから1日全体を集計、アプリ側で使用）
+6. time_blocksをaudio_aggregator.behavior_aggregator_resultに保存
 """
 
 import asyncio
@@ -66,8 +67,8 @@ class SEDAggregator:
         print(f"📊 Supabaseからデータ取得開始: device_id={device_id}, date={date}")
 
         try:
-            # Supabaseからデータを取得
-            response = self.supabase.table('behavior_yamnet').select('*').eq(
+            # Supabaseからデータを取得（audio_featuresテーブル）
+            response = self.supabase.table('audio_features').select('time_block, behavior_extractor_result').eq(
                 'device_id', device_id
             ).eq(
                 'date', date
@@ -77,8 +78,9 @@ class SEDAggregator:
             results = {}
             for row in response.data:
                 time_block = row['time_block']
-                events = row['events']  # jsonb型なのでそのまま辞書として扱える
-                results[time_block] = events
+                events = row['behavior_extractor_result']  # jsonb型なのでそのまま辞書として扱える
+                if events:  # データが存在する場合のみ追加
+                    results[time_block] = events
 
             print(f"✅ データ取得完了: {len(results)}/{len(self.time_slots)} スロット")
             return results
@@ -231,18 +233,20 @@ class SEDAggregator:
         return result
 
     async def save_to_supabase(self, result: Dict, device_id: str, date: str) -> bool:
-        """結果をSupabaseのbehavior_summaryテーブルに保存"""
+        """結果をSupabaseのaudio_aggregatorテーブルに保存"""
         try:
             # Supabaseにデータを保存（UPSERT）
-            response = self.supabase.table('behavior_summary').upsert({
+            # summary_rankingは保存せず、time_blocksのみ保存（アプリ側で計算）
+            response = self.supabase.table('audio_aggregator').upsert({
                 'device_id': device_id,
                 'date': date,
-                'summary_ranking': result['summary_ranking'],
-                'time_blocks': result['time_blocks']
+                'behavior_aggregator_result': result['time_blocks'],  # time_blocksを保存
+                'behavior_aggregator_processed_at': datetime.utcnow().isoformat()
             }).execute()
 
-            print(f"💾 Supabase保存完了: behavior_summary テーブル")
+            print(f"💾 Supabase保存完了: audio_aggregator テーブル")
             print(f"   device_id: {device_id}, date: {date}")
+            print(f"   behavior_aggregator_result に time_blocks を保存")
             return True
 
         except Exception as e:
@@ -299,7 +303,7 @@ async def main():
 
     if result["success"]:
         print(f"\n✅ 処理完了")
-        print(f"💾 データはSupabaseのbehavior_summaryテーブルに保存されました")
+        print(f"💾 データはSupabaseのaudio_aggregatorテーブルに保存されました")
     else:
         print(f"\n❌ 処理失敗: {result['message']}")
 

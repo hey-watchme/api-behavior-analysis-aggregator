@@ -51,8 +51,8 @@
 | └ 環境変数 | `API_BASE_URL=https://api.hey-watch.me` | Lambda内 |
 | | | |
 | **📥 データソース** | | |
-| └ 入力テーブル | `behavior_yamnet` | Behavior Featuresの出力 |
-| └ 出力テーブル | `behavior_summary` | 集計結果 |
+| └ 入力テーブル | `audio_features.behavior_extractor_result` | Behavior Featuresの出力 |
+| └ 出力テーブル | `audio_aggregator.behavior_aggregator_result` | 集計結果（time_blocks） |
 
 ---
 
@@ -70,36 +70,41 @@
 
 ```mermaid
 graph LR
-    A[behavior_yamnet<br/>生データ] --> B[イベント抽出<br/>英語ラベル]
+    A[audio_features<br/>behavior_extractor_result] --> B[イベント抽出<br/>英語ラベル]
     B --> C[音の統合<br/>類似音をマージ]
-    C --> D[ランキング作成<br/>優先/除外/通常]
-    D --> E[翻訳処理<br/>日本語化]
-    E --> F[behavior_summary<br/>集計結果]
+    C --> D[time_blocks作成<br/>30分スロット別集計]
+    D --> E[summary_ranking作成<br/>アプリ側で使用]
+    D --> F[audio_aggregator<br/>behavior_aggregator_result]
 ```
 
 ### 処理パイプライン
 
-1. **データ取得**: `behavior_yamnet`テーブルから音響イベントデータを取得
+1. **データ取得**: `audio_features.behavior_extractor_result`から音響イベントデータを取得
 2. **イベント統合**: 類似する音響イベントを英語のままグループ化
-3. **ランキング生成**: 優先カテゴリ抽出 → 除外フィルタ → 通常ランキング
-4. **翻訳適用**: API応答時に日本語翻訳を適用（オプション）
-5. **データ保存**: `behavior_summary`テーブルに全データを保存
+3. **time_blocks生成**: 30分スロット別の集計データを作成
+4. **summary_ranking生成**: 1日全体のランキング（アプリ側で計算可能、DBには保存しない）
+5. **データ保存**: `audio_aggregator.behavior_aggregator_result`にtime_blocksを保存
 
 ## 🗄️ データベース構造
 
-### 入力: behavior_yamnet テーブル
+### 入力: audio_features テーブル
 
 ```sql
-CREATE TABLE behavior_yamnet (
-    device_id     text NOT NULL,
-    date          date NOT NULL,
-    time_block    text NOT NULL,  -- 30分単位のスロット (例: "15-00", "15-30")
-    events        jsonb NOT NULL,  -- 音響イベントのJSON配列
+CREATE TABLE audio_features (
+    device_id     TEXT NOT NULL,
+    date          DATE NOT NULL,
+    time_block    TEXT NOT NULL,  -- 30分単位のスロット (例: "15-00", "15-30")
+
+    -- Behavior Extractor (SED)
+    behavior_extractor_result JSONB,  -- 音響イベントのJSON配列
+    behavior_extractor_status TEXT DEFAULT 'pending',
+    behavior_extractor_processed_at TIMESTAMP WITH TIME ZONE,
+
     PRIMARY KEY (device_id, date, time_block)
 );
 ```
 
-**eventsフィールドの形式（AST形式）:**
+**behavior_extractor_resultフィールドの形式（AST形式）:**
 ```json
 [
     {
@@ -112,17 +117,22 @@ CREATE TABLE behavior_yamnet (
 ]
 ```
 
-### 出力: behavior_summary テーブル
+### 出力: audio_aggregator テーブル
 
 ```sql
-CREATE TABLE behavior_summary (
-    device_id       text NOT NULL,
-    date            date NOT NULL,
-    summary_ranking jsonb NOT NULL,  -- 優先イベント＋ランキング（全データ）
-    time_blocks     jsonb NOT NULL,  -- 時間帯別の詳細データ
-    PRIMARY KEY (device_id, date)
+CREATE TABLE audio_aggregator (
+    device_id       TEXT NOT NULL,
+    date            DATE NOT NULL,
+
+    -- Behavior Aggregator
+    behavior_aggregator_result JSONB,  -- time_blocks（30分スロット別集計）
+    behavior_aggregator_processed_at TIMESTAMP WITH TIME ZONE,
+
+    PRIMARY KEY (device_id, date)  -- 1日1レコード
 );
 ```
+
+**重要**: `summary_ranking`はDBに保存せず、アプリ側で`time_blocks`から計算します。
 
 **summary_rankingフィールドの形式:**
 ```json
